@@ -1875,3 +1875,31 @@ audio {
     top: 33%;
   }
 }
+/* Keep installation in the document flow so it never covers room controls. */
+.install-app {
+  display: flex;
+  margin: max(10px, env(safe-area-inset-top)) 16px 10px auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #dfd5be;
+  border-radius: 24px;
+  background: #fffaf0f2;
+  color: #605443;
+  box-shadow: 0 3px 15px #66523312;
+  font-size: 12px;
+  cursor: pointer;
+}
+.install-instructions {
+  display: grid;
+  gap: 18px;
+  line-height: 1.7;
+}
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

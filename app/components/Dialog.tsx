@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useId, type ReactNode } from "react";
 import { X } from "lucide-react";
 export default function Dialog({
   title,
@@ -13,6 +13,7 @@ export default function Dialog({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   useEffect(() => {
     const dialog = ref.current;
     const previous = document.activeElement as HTMLElement | null;
@@ -29,7 +30,7 @@ export default function Dialog({
     <dialog
       ref={ref}
       className="paper-dialog"
-      aria-labelledby="dialog-title"
+      aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
         onClose();
@@ -50,7 +51,7 @@ export default function Dialog({
       <div className="dialog-header">
         <div>
           <p className="eyebrow">EL RINCÓN DE JANNY</p>
-          <h2 id="dialog-title">{title}</h2>
+          <h2 id={titleId}>{title}</h2>
           {subtitle && <p>{subtitle}</p>}
         </div>
         <button className="icon-button" onClick={onClose} aria-label="Cerrar">

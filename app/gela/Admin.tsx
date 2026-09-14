@@ -9,7 +9,7 @@ import MemoriesPanel from "../components/MemoriesPanel";
 import ContentManager from "./ContentManager";
 function Panel() {
   const router = useRouter();
-  const { data, error, refresh, toast, notify } = useWorld();
+  const { data, error, refresh, toast, notify, profile } = useWorld();
   const [tab, setTab] = useState("mail");
   const tabs = [
     { id: "mail", name: "Buzón" },
@@ -23,7 +23,7 @@ function Panel() {
       <header>
         <div>
           <p className="eyebrow">EL OTRO LADO DEL RINCÓN</p>
-          <h1>Con cariño, Gela.</h1>
+          <h1>Con cariño, {profile.name}.</h1>
           <p>Aquí preparas las pequeñas cosas que llegarán hasta Janny.</p>
         </div>
         <button

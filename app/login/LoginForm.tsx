@@ -1,11 +1,57 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { browserDb, configured } from "@/lib/supabase/client";
 export default function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => {
+    if (!configured) return;
+    const params = new URLSearchParams(window.location.search);
+    if (
+      params.has("expired") ||
+      new URLSearchParams(window.location.hash.slice(1)).has("error")
+    ) {
+      queueMicrotask(() =>
+        setError(
+          "Esta llave ya venció o fue utilizada. Pide una nueva para entrar.",
+        ),
+      );
+    }
+    if (params.has("restricted")) {
+      queueMicrotask(() =>
+        setError(
+          "Tu correo todavía no tiene un perfil en este rincón. Estamos preparando tu acceso.",
+        ),
+      );
+      return;
+    }
+    const db = browserDb();
+    let active = true;
+    const enter = () => {
+      if (!active) return;
+      // Remove invitation fragments after Supabase has stored the session.
+      window.history.replaceState(null, "", window.location.pathname);
+      router.replace("/");
+      router.refresh();
+    };
+    const {
+      data: { subscription },
+    } = db.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+        if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION"))
+          enter();
+      },
+    );
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, [router]);
   async function login(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);

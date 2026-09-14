@@ -1,8 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr";
-export const configured = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-);
+import { configured, supabaseUrl, supabasePublicKey } from "./config";
+export { configured } from "./config";
 export const previewAllowed =
   process.env.NODE_ENV === "development" && !configured;
 let client: ReturnType<typeof createBrowserClient> | undefined;
@@ -11,9 +9,6 @@ export function browserDb() {
     throw new Error(
       "Falta conectar Supabase. Los mensajes aún no pueden enviarse.",
     );
-  client ??= createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  );
+  client ??= createBrowserClient(supabaseUrl!, supabasePublicKey!);
   return client;
 }

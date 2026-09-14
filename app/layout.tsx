@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import Pwa from "./components/Pwa";
 export const metadata: Metadata = {
   title: "El rincón de Janny",
   description: "Un pequeño lugar hecho con cariño.",
@@ -20,7 +21,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <Pwa />
+        {children}
+      </body>
     </html>
   );
 }

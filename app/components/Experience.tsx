@@ -6,7 +6,6 @@ import type { Profile } from "@/lib/types";
 import WelcomeSequence from "./WelcomeSequence";
 import HomeScene from "./HomeScene";
 import Panels from "./Panels";
-import Pwa from "./Pwa";
 function ExperienceBody() {
   const { profile, setPanel, toast, preview } = useWorld();
   const [name, setName] = useState(profile.name);
@@ -64,7 +63,6 @@ function ExperienceBody() {
           Vista local · los mensajes necesitan conectar Supabase
         </div>
       )}
-      <Pwa />
     </>
   );
 }
