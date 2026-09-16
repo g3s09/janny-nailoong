@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# El rincón de Janny
 
-## Getting Started
+Aplicación privada para dos personas, hecha con Next.js, Supabase y Motion. Producción: https://janny-nailoong.vercel.app.
 
-First, run the development server:
+## Desarrollo
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Instalar con `npm ci`.
+2. Copiar `.env.example` a `.env.local` y completar la URL y clave publicable de Supabase.
+3. Ejecutar `npm run dev`.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Nunca colocar claves secretas o `service_role` en variables `NEXT_PUBLIC_*`. `.env.local` está excluido de Git.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+La vista local sin Supabase solo se habilita en desarrollo. En producción, la falta de configuración mantiene cerrado el acceso.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Comprobaciones
 
-## Learn More
+- `npm run lint`
+- `npm run typecheck`
+- `npm test`: políticas de privacidad, cartas programadas, adjuntos y economía con PostgreSQL embebido.
+- `npm run build`
 
-To learn more about Next.js, take a look at the following resources:
+## Acceso y privacidad
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+El acceso usa enlaces enviados al correo invitado. El cliente conserva la sesión y renueva los tokens; cada navegador/dispositivo tiene su propia sesión. Cerrar sesión, borrar cookies, usar navegación privada o invalidar la sesión puede exigir otro enlace.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Los usuarios autorizados necesitan una cuenta en Supabase Auth y una fila en `profiles`. Los roles únicos `gela` y `janny` limitan la aplicación a dos perfiles. El diario pertenece exclusivamente a su autora. El buzón permite texto e imágenes/audio y se actualiza con Realtime y comprobaciones periódicas.
 
-## Deploy on Vercel
+La migración `supabase/migrations/001_private_world.sql` ya se instaló en el proyecto remoto. No ejecutarla otra vez a ciegas: no es una migración completamente idempotente. Mantener los cambios posteriores en migraciones nuevas.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Animaciones y accesibilidad
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Los diálogos usan entrada/salida con Motion y mantienen el modal hasta terminar el cierre. Escape, el botón de cerrar y el clic exterior cierran la sección y restauran el foco. Los efectos respetan `prefers-reduced-motion`. Las sugerencias de escritura son opcionales, editables y no envían ni guardan contenido automáticamente.
+
+## Instalación y límites actuales
+
+El manifiesto, los iconos y el service worker permiten instalar la web como PWA. El botón de instalación ofrece instrucciones cuando el navegador no expone instalación directa. La pantalla sin conexión solo almacena recursos públicos; no guarda cartas ni diarios en caché.
+
+- La mensajería necesita internet. Las notificaciones actuales se muestran dentro de la aplicación; no hay notificaciones push con la app cerrada.
+- La animación actual de Nailoong parte del PNG original. El soporte Rive es opcional y requiere proporcionar un archivo `.riv` compatible.
+- Las fotos, cartas y fechas personales deben aportarlas los usuarios; no se generan recuerdos ficticios.
+- La validación final entre dos dispositivos requiere que ambos abran sus enlaces y envíen/reciban un mensaje real.
+
+## Publicación
+
+El repositorio en GitHub despliega `main` en Vercel. Variables de producción: `NEXT_PUBLIC_SUPABASE_PROJECT_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; se conservan alias anteriores para compatibilidad. Comprobar siempre el resultado del despliegue después de publicar.
