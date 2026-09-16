@@ -126,6 +126,11 @@ export default function LoginForm() {
       <p className="privacy-note">
         Solo pueden entrar los dos correos invitados.
       </p>
+      <p className="privacy-note">
+        En tu dispositivo personal, la sesión se conserva para que puedas volver
+        sin pedir una llave cada vez. Si usas otro dispositivo o cierras sesión,
+        te enviaremos una nueva.
+      </p>
     </form>
   );
 }

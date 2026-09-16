@@ -62,7 +62,7 @@ function Panel() {
           {error} <button onClick={() => void refresh()}>Reintentar</button>
         </p>
       )}
-      <section className="admin-paper">
+      <section className="admin-paper section-reveal" key={tab}>
         {tab === "mail" ? (
           <MailPanel admin />
         ) : tab === "memories" ? (

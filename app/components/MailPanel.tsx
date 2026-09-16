@@ -6,6 +6,7 @@ import { browserDb } from "@/lib/supabase/client";
 import { uploadFile, removeFile, friendlyError } from "@/lib/data";
 import { prettyDate } from "@/lib/constants";
 import PrivateMedia from "./PrivateMedia";
+import WritingPrompts from "./WritingPrompts";
 export default function MailPanel({ admin = false }: { admin?: boolean }) {
   const { data, profile, preview, refresh, sound, notify } = useWorld();
   const [text, setText] = useState("");
@@ -153,6 +154,19 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
         <label htmlFor="letter-body">
           {admin ? "Unas palabras para Janny" : "Querido Gela…"}
         </label>
+        {!text && (
+          <WritingPrompts
+            ideas={[
+              "Hoy me acordé de ti porque…",
+              "Te quería contar algo…",
+              "Un plan que me gustaría compartir…",
+            ]}
+            onChoose={(idea) => {
+              setText(idea.replace("…", " "));
+              document.getElementById("letter-body")?.focus();
+            }}
+          />
+        )}
         <textarea
           id="letter-body"
           rows={4}

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
 import Dialog from "./Dialog";
+import { AnimatePresence } from "motion/react";
 type InstallEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
@@ -76,33 +77,35 @@ export default function Pwa() {
         <Download size={16} aria-hidden="true" />{" "}
         {busy ? "Abriendo…" : "Instalar app"}
       </button>
-      {help && (
-        <Dialog
-          title="Tu rincón, siempre cerquita"
-          subtitle="Guárdalo en tu pantalla de inicio."
-          onClose={() => setHelp(false)}
-        >
-          <div className="install-instructions">
-            <p>
-              <strong>iPhone o iPad:</strong> abre esta página en Safari, toca
-              Compartir y elige «Agregar a pantalla de inicio».
-            </p>
-            <p>
-              <strong>Android:</strong> abre el menú de Chrome y elige «Instalar
-              aplicación» o «Agregar a pantalla de inicio».
-            </p>
-            <p>
-              <strong>Computadora:</strong> en Edge o Chrome, busca el icono de
-              instalación junto a la dirección, o la opción de instalar en el
-              menú del navegador.
-            </p>
-            <p className="privacy-note">
-              Tendrás tu propio icono y una ventana para ustedes. Necesitas
-              conexión para recibir y enviar mensajes.
-            </p>
-          </div>
-        </Dialog>
-      )}
+      <AnimatePresence>
+        {help && (
+          <Dialog
+            title="Tu rincón, siempre cerquita"
+            subtitle="Guárdalo en tu pantalla de inicio."
+            onClose={() => setHelp(false)}
+          >
+            <div className="install-instructions">
+              <p>
+                <strong>iPhone o iPad:</strong> abre esta página en Safari, toca
+                Compartir y elige «Agregar a pantalla de inicio».
+              </p>
+              <p>
+                <strong>Android:</strong> abre el menú de Chrome y elige
+                «Instalar aplicación» o «Agregar a pantalla de inicio».
+              </p>
+              <p>
+                <strong>Computadora:</strong> en Edge o Chrome, busca el icono
+                de instalación junto a la dirección, o la opción de instalar en
+                el menú del navegador.
+              </p>
+              <p className="privacy-note">
+                Tendrás tu propio icono y una ventana para ustedes. Necesitas
+                conexión para recibir y enviar mensajes.
+              </p>
+            </div>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </>
   );
 }

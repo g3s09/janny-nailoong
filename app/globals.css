@@ -666,12 +666,13 @@ button:hover:not(:disabled) {
   background: #fffbf2;
   color: #65573f;
   box-shadow: 0 35px 120px #3d2d2e33;
-  animation: paper-in 0.3s ease-out;
+  overscroll-behavior: contain;
   overflow-y: auto;
 }
 .paper-dialog::backdrop {
   background: #3b352b55;
   backdrop-filter: blur(7px);
+  animation: backdrop-in 0.3s ease both;
 }
 .dialog-header {
   padding: 28px 30px 22px;
@@ -1901,5 +1902,136 @@ audio {
   textarea,
   select {
     font-size: 16px;
+  }
+}
+
+/* Calm transitions: one entrance per section, no looping decoration. */
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes section-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.paper-dialog[data-exiting] {
+  pointer-events: none;
+}
+.paper-dialog[data-exiting]::backdrop {
+  animation: backdrop-out 0.18s ease both;
+}
+.dialog-body > *,
+.section-reveal {
+  animation: section-reveal 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.dialog-body > :nth-child(2) {
+  animation-delay: 0.035s;
+}
+.dialog-body > :nth-child(3) {
+  animation-delay: 0.07s;
+}
+.dialog-body > :nth-child(4) {
+  animation-delay: 0.105s;
+}
+.dialog-body > :nth-child(5) {
+  animation-delay: 0.14s;
+}
+.dialog-header .icon-button {
+  min-width: 44px;
+  min-height: 44px;
+}
+.writing-prompts {
+  padding: 15px 17px;
+  border: 1px solid #e9dfcc;
+  border-radius: 14px;
+  background: #f6f0e4;
+}
+.writing-prompts p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  margin: 0 0 10px;
+  color: #77684f;
+}
+.writing-prompts > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.writing-prompts button {
+  min-height: 44px;
+  padding: 10px 13px;
+  border-radius: 12px;
+  border: 1px solid #ded3be;
+  background: #fffcf6;
+  color: #65573f;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  transition:
+    background 0.18s,
+    border-color 0.18s,
+    transform 0.18s;
+}
+.writing-prompts small {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #786d59;
+}
+.letter-composer > .writing-prompts {
+  margin: 12px 0;
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .envelope,
+  .polaroid,
+  .event-list article {
+    transition:
+      transform 0.22s ease,
+      box-shadow 0.22s ease;
+  }
+  .envelope:hover:not(:disabled) {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 26px #66523316;
+  }
+  .writing-prompts button:hover {
+    border-color: #b7a07a;
+    background: #fff;
+  }
+}
+@media (max-width: 700px) {
+  .paper-dialog {
+    max-height: calc(
+      100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    );
+  }
+  .dialog-body {
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
+  }
+  .writing-prompts {
+    padding: 13px;
+  }
+  .writing-prompts button {
+    flex: 1 1 100%;
   }
 }

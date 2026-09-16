@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useId, type ReactNode } from "react";
 import { X } from "lucide-react";
+import { motion, useIsPresent, useReducedMotion } from "motion/react";
 export default function Dialog({
   title,
   subtitle,
@@ -14,6 +15,8 @@ export default function Dialog({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const present = useIsPresent();
+  const reduced = useReducedMotion();
   useEffect(() => {
     const dialog = ref.current;
     const previous = document.activeElement as HTMLElement | null;
@@ -27,9 +30,17 @@ export default function Dialog({
     };
   }, []);
   return (
-    <dialog
+    <motion.dialog
       ref={ref}
       className="paper-dialog"
+      data-exiting={!present || undefined}
+      initial={{ opacity: 0, y: reduced ? 0 : 24, scale: reduced ? 1 : 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: reduced ? 0 : 12, scale: reduced ? 1 : 0.99 }}
+      transition={{
+        duration: reduced ? 0 : present ? 0.32 : 0.18,
+        ease: [0.22, 1, 0.36, 1],
+      }}
       aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
@@ -59,6 +70,6 @@ export default function Dialog({
         </button>
       </div>
       <div className="dialog-body">{children}</div>
-    </dialog>
+    </motion.dialog>
   );
 }

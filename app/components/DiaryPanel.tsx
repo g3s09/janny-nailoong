@@ -5,6 +5,7 @@ import { moods, prettyDate, today } from "@/lib/constants";
 import { useWorld } from "@/lib/world-store";
 import { browserDb } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/data";
+import WritingPrompts from "./WritingPrompts";
 export default function DiaryPanel() {
   const {
     data,
@@ -93,6 +94,19 @@ export default function DiaryPanel() {
           ))}
         </div>
         <label htmlFor="diary-note">Si quieres, puedes dejarlo aquí.</label>
+        {!note && (
+          <WritingPrompts
+            ideas={[
+              "Hoy agradezco…",
+              "Algo que necesito soltar…",
+              "Un momento que quiero recordar…",
+            ]}
+            onChoose={(idea) => {
+              setNote(idea.replace("…", " "));
+              document.getElementById("diary-note")?.focus();
+            }}
+          />
+        )}
         <textarea
           id="diary-note"
           rows={4}
@@ -167,7 +181,7 @@ export default function DiaryPanel() {
             );
           })}
         </div>
-        <div className="diary-read">
+        <div className="diary-read section-reveal" key={selected}>
           <strong>{prettyDate(selected)}</strong>
           <p>
             {viewed

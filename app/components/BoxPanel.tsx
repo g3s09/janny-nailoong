@@ -43,7 +43,7 @@ export default function BoxPanel() {
   return (
     <>
       {opened ? (
-        <article className="open-letter">
+        <article className="open-letter section-reveal">
           <button className="text-button" onClick={() => setOpened(null)}>
             ← Volver a la caja
           </button>
