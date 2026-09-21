@@ -2035,3 +2035,23 @@ audio {
     flex: 1 1 100%;
   }
 }
+.preview-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 24px;
+  padding: 14px 20px;
+  background: #eee5d1;
+  color: #67563b;
+  font-size: 12px;
+}
+.preview-toolbar a {
+  padding: 10px;
+  border-radius: 10px;
+  background: #fffbf2;
+  text-decoration: none;
+}
+.preview-toolbar span {
+  opacity: 0.8;
+}

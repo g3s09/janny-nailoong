@@ -6,26 +6,29 @@ import type { Profile } from "@/lib/types";
 import WelcomeSequence from "./WelcomeSequence";
 import HomeScene from "./HomeScene";
 import Panels from "./Panels";
-function ExperienceBody() {
+function ExperienceBody({ freshStart = false }: { freshStart?: boolean }) {
   const { profile, setPanel, toast, preview } = useWorld();
-  const [name, setName] = useState(profile.name);
+  const [name, setName] = useState("");
   const [intro, setIntro] = useState<boolean | null>(null);
   useEffect(() => {
     const task = window.setTimeout(() => {
       try {
-        setName(localStorage.getItem("nailoong-user-name") || profile.name);
-        setIntro(localStorage.getItem("nailoong-welcome-seen") !== "true");
+        const saved = freshStart
+          ? null
+          : localStorage.getItem(`janny-intro-v2:${profile.id}`);
+        setName(saved || "");
+        setIntro(!saved);
       } catch {
         setIntro(true);
       }
     }, 0);
     return () => clearTimeout(task);
-  }, [profile.name]);
+  }, [profile.id, freshStart]);
   function complete(value: string) {
     setName(value);
     try {
-      localStorage.setItem("nailoong-user-name", value);
-      localStorage.setItem("nailoong-welcome-seen", "true");
+      if (!freshStart)
+        localStorage.setItem(`janny-intro-v2:${profile.id}`, value);
     } catch {}
     setIntro(false);
     setPanel("letter");
@@ -42,12 +45,16 @@ function ExperienceBody() {
             name={name}
             onRepeat={() => {
               setPanel(null);
+              setName("");
+              localStorage.removeItem(`janny-intro-v2:${profile.id}`);
               setIntro(true);
             }}
           />
           <Panels
             onRepeat={() => {
               setPanel(null);
+              setName("");
+              localStorage.removeItem(`janny-intro-v2:${profile.id}`);
               setIntro(true);
             }}
           />
@@ -69,14 +76,20 @@ function ExperienceBody() {
 export default function Experience({
   profile,
   preview,
+  freshStart = false,
 }: {
   profile: Profile;
   preview: boolean;
+  freshStart?: boolean;
 }) {
   return (
     <MotionConfig reducedMotion="user">
-      <WorldProvider profile={profile} preview={preview}>
-        <ExperienceBody />
+      <WorldProvider
+        profile={profile}
+        preview={preview}
+        ephemeral={freshStart && preview}
+      >
+        <ExperienceBody freshStart={freshStart} />
       </WorldProvider>
     </MotionConfig>
   );

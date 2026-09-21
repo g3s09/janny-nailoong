@@ -134,7 +134,7 @@ export default function WelcomeSequence({
                   </label>
                   <input
                     id="welcome-name"
-                    autoComplete="given-name"
+                    autoComplete="off"
                     maxLength={40}
                     value={name}
                     onChange={(e) => setName(e.target.value)}

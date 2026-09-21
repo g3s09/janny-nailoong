@@ -34,11 +34,11 @@ export default function Dialog({
       ref={ref}
       className="paper-dialog"
       data-exiting={!present || undefined}
-      initial={{ opacity: 0, y: reduced ? 0 : 24, scale: reduced ? 1 : 0.98 }}
+      initial={{ opacity: 0, y: reduced ? 0 : 32, scale: reduced ? 1 : 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: reduced ? 0 : 12, scale: reduced ? 1 : 0.99 }}
       transition={{
-        duration: reduced ? 0 : present ? 0.32 : 0.18,
+        duration: reduced ? 0 : present ? 0.42 : 0.2,
         ease: [0.22, 1, 0.36, 1],
       }}
       aria-labelledby={titleId}

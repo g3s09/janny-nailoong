@@ -21,5 +21,5 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 export const config = {
-  matcher: ["/", "/gela/:path*", "/login", "/auth/:path*"],
+  matcher: ["/", "/gela/:path*", "/preview", "/login", "/auth/:path*"],
 };

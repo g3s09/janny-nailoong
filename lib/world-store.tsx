@@ -58,10 +58,12 @@ export function WorldProvider({
   children,
   profile,
   preview,
+  ephemeral = false,
 }: {
   children: ReactNode;
   profile: Profile;
   preview: boolean;
+  ephemeral?: boolean;
 }) {
   const [moodDraft, setMoodDraft] = useState<number | null>(null);
   const [data, setData] = useState<Snapshot>(emptySnapshot);
@@ -124,11 +126,15 @@ export function WorldProvider({
     let active = true;
     async function initialize() {
       try {
-        const raw = localStorage.getItem(`janny-prefs:${profile.id}`);
+        const raw = ephemeral
+          ? null
+          : localStorage.getItem(`janny-prefs:${profile.id}`);
         if (raw)
           setPrefs({ ...defaultPrefs, ...JSON.parse(raw), music: false });
         if (preview) {
-          const stored = localStorage.getItem("janny-local-preview-v1");
+          const stored = ephemeral
+            ? null
+            : localStorage.getItem("janny-local-preview-v1");
           const next: Snapshot = stored
             ? { ...emptySnapshot, ...JSON.parse(stored) }
             : { ...emptySnapshot, profiles: [profile] };
@@ -160,9 +166,9 @@ export function WorldProvider({
       active = false;
       setAmbience(false);
     };
-  }, [preview, profile, refresh]);
+  }, [preview, profile, refresh, ephemeral]);
   useEffect(() => {
-    if (!loading && preview && !error) {
+    if (!loading && preview && !error && !ephemeral) {
       try {
         localStorage.setItem("janny-local-preview-v1", JSON.stringify(data));
       } catch {
@@ -171,7 +177,7 @@ export function WorldProvider({
         );
       }
     }
-  }, [data, preview, notify, loading, error]);
+  }, [data, preview, notify, loading, error, ephemeral]);
   useEffect(() => {
     if (preview) return;
     const db = browserDb();
