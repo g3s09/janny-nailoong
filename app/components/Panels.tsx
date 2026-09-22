@@ -40,6 +40,7 @@ export default function Panels({ onRepeat }: { onRepeat: () => void }) {
       {panel && (
         <Dialog
           key={panel}
+          kind={panel}
           title={titles[panel]}
           subtitle={subtitles[panel]}
           onClose={() => setPanel(null)}

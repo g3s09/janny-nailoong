@@ -7,7 +7,7 @@ test("Private world: real PostgreSQL policies, delivery, files and economy", asy
   const db = new PGlite();
   t.after(() => db.close());
   await db.exec(`
-    create role anon; create role authenticated;
+    create role anon; create role authenticated; create role service_role bypassrls;
     create schema auth; create schema storage;
     create table auth.users(id uuid primary key);
     create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
@@ -27,6 +27,12 @@ test("Private world: real PostgreSQL policies, delivery, files and economy", asy
     ),
   );
   const janny = "11111111-1111-4111-8111-111111111111";
+  await db.exec(
+    await readFile(
+      new URL("../supabase/migrations/002_private_push.sql", import.meta.url),
+      "utf8",
+    ),
+  );
   const gela = "22222222-2222-4222-8222-222222222222";
   const outsider = "33333333-3333-4333-8333-333333333333";
   await db.exec(
@@ -202,6 +208,71 @@ test("Private world: real PostgreSQL policies, delivery, files and economy", asy
       await db.exec("reset role;set role anon");
       await assert.rejects(db.query("select * from public.messages"));
       await assert.rejects(db.exec("select public.record_visit()"));
+    },
+  );
+  await t.test(
+    "Push subscriptions stay private; only the server can claim due unread jobs",
+    async () => {
+      await asUser(janny);
+      await db.exec(
+        `insert into public.push_subscriptions(endpoint,owner_id,p256dh,auth) values('https://fcm.googleapis.com/test','${janny}','public-key','auth-key')`,
+      );
+      await asUser(gela);
+      assert.equal(await count("push_subscriptions"), 0);
+      await assert.rejects(
+        db.exec(
+          `insert into public.push_subscriptions(endpoint,owner_id,p256dh,auth) values('https://fcm.googleapis.com/forged','${janny}','x','x')`,
+        ),
+      );
+      await assert.rejects(db.query("select * from public.push_jobs"));
+      await assert.rejects(db.query("select * from public.claim_push_jobs()"));
+      const immediate = (
+        await db.query(
+          `insert into public.messages(sender_id,recipient_id,body) values('${gela}','${janny}','Immediate') returning id`,
+        )
+      ).rows[0].id;
+      await db.exec(
+        `insert into public.messages(sender_id,recipient_id,body,deliver_at) values('${gela}','${janny}','Scheduled',now()+interval '1 day')`,
+      );
+      await db.exec("reset role; set role service_role");
+      assert.equal(
+        (await db.query("select * from public.push_jobs")).rows.length,
+        2,
+      );
+      assert.equal(
+        (await db.query(`select * from public.claim_push_jobs('${janny}')`))
+          .rows.length,
+        0,
+      );
+      const claimed = (
+        await db.query(`select * from public.claim_push_jobs('${gela}')`)
+      ).rows;
+      assert.equal(claimed.length, 1);
+      assert.equal(claimed[0].message_id, immediate);
+      assert.ok(claimed[0].claim_token);
+      assert.equal(claimed[0].attempts, 1);
+      assert.equal(
+        (await db.query("select * from public.claim_push_jobs()")).rows.length,
+        0,
+      );
+      await asUser(janny);
+      await db.exec(`select public.mark_message_read('${immediate}')`);
+      await db.exec(
+        "reset role; set role service_role; update public.push_jobs set available_at=now()-interval '1 minute'",
+      );
+      assert.equal(
+        (await db.query("select * from public.claim_push_jobs()")).rows.length,
+        0,
+      );
+      await asUser(outsider);
+      assert.equal(await count("push_subscriptions"), 0);
+      await asUser(janny);
+      await db.exec("delete from public.push_subscriptions");
+      await db.exec("reset role; set role service_role");
+      assert.equal(
+        (await db.query("select * from public.push_jobs")).rows.length,
+        0,
+      );
     },
   );
 });

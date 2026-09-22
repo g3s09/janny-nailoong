@@ -3,9 +3,11 @@ import { useRouter } from "next/navigation";
 import { useWorld } from "@/lib/world-store";
 import { browserDb } from "@/lib/supabase/client";
 import type { Preferences } from "@/lib/types";
+import PushSettings from "./PushSettings";
+import { clearDeviceSession } from "@/lib/device-session";
 export default function SettingsPanel({ onRepeat }: { onRepeat: () => void }) {
   const router = useRouter();
-  const { prefs, updatePrefs, preview, setPanel, notify } = useWorld();
+  const { prefs, updatePrefs, preview, setPanel, notify, profile } = useWorld();
   const toggles: {
     key: keyof Preferences;
     title: string;
@@ -68,14 +70,12 @@ export default function SettingsPanel({ onRepeat }: { onRepeat: () => void }) {
           diario no se almacenan en la caché.
         </p>
       </div>
-      <p className="privacy-note">
-        Los avisos fuera de la aplicación no están activados. No se solicita
-        permiso de notificaciones innecesariamente.
-      </p>
+      <PushSettings />
       {!preview && (
         <button
           className="text-button"
           onClick={async () => {
+            await clearDeviceSession(profile.id);
             const { error } = await browserDb().auth.signOut();
             if (error) {
               notify("No se pudo cerrar la sesión. Inténtalo de nuevo.");

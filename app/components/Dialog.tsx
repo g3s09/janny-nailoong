@@ -7,11 +7,13 @@ export default function Dialog({
   subtitle,
   children,
   onClose,
+  kind = "default",
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   onClose: () => void;
+  kind?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -33,9 +35,16 @@ export default function Dialog({
     <motion.dialog
       ref={ref}
       className="paper-dialog"
+      data-section={kind}
       data-exiting={!present || undefined}
-      initial={{ opacity: 0, y: reduced ? 0 : 32, scale: reduced ? 1 : 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{
+        opacity: 0,
+        y: reduced ? 0 : kind === "mail" ? 44 : 24,
+        scale: reduced ? 1 : kind === "box" ? 0.9 : 0.98,
+        rotate: reduced ? 0 : kind === "memories" ? -2 : 0,
+        rotateY: reduced ? 0 : kind === "diary" ? -12 : 0,
+      }}
+      animate={{ opacity: 1, y: 0, scale: 1, rotate: 0, rotateY: 0 }}
       exit={{ opacity: 0, y: reduced ? 0 : 12, scale: reduced ? 1 : 0.99 }}
       transition={{
         duration: reduced ? 0 : present ? 0.42 : 0.2,

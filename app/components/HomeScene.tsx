@@ -77,6 +77,14 @@ export default function HomeScene({
     setPanel(panel);
     if (panel === "mail")
       say("El buzón tiene el mejor trabajo de la casa.", "look-left");
+    else if (panel === "diary")
+      say("Te cuido el silencio. Aquí puedes escribir a tu ritmo.", "sit");
+    else if (panel === "memories")
+      say("¿Miramos un ratito las cosas que merecen quedarse?", "happy");
+    else if (panel === "box")
+      say("Estos sobres guardan abrazos. Lo comprobé personalmente.", "hug");
+    else if (panel === "calendar")
+      say("Tengo una excelente memoria para los días con pastel.", "thinking");
   }
   return (
     <div className={`world ${night ? "night" : ""}`}>
@@ -115,7 +123,14 @@ export default function HomeScene({
         <div className="scene-heading">
           <div>
             <p className="eyebrow">AQUÍ, EL MUNDO VA MÁS DESPACIO</p>
-            <h1>Qué bonito que estés aquí, {name || "Janny"}.</h1>
+            <h1>
+              {hour < 12
+                ? "Buenos días"
+                : hour < 19
+                  ? "Qué bonita tarde"
+                  : "Una noche tranquila"}
+              , {name || "Janny"}.
+            </h1>
             <p>Deja el día afuera. Este ratito es tuyo.</p>
           </div>
           <button

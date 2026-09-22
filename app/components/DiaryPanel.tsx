@@ -6,6 +6,7 @@ import { useWorld } from "@/lib/world-store";
 import { browserDb } from "@/lib/supabase/client";
 import { friendlyError } from "@/lib/data";
 import WritingPrompts from "./WritingPrompts";
+import { useDraft } from "@/lib/use-draft";
 export default function DiaryPanel() {
   const {
     data,
@@ -22,7 +23,13 @@ export default function DiaryPanel() {
   const [mood, setMood] = useState<number | null>(
     moodDraft ?? current?.mood ?? null,
   );
-  const [note, setNote] = useState(current?.note ?? "");
+  const draft = useDraft(
+    `${profile.id}:diary:${today()}`,
+    current?.note ?? "",
+    !preview,
+  );
+  const note = draft.value;
+  const setNote = draft.setValue;
   const [month, setMonth] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
   );
@@ -61,6 +68,7 @@ export default function DiaryPanel() {
         mood === 3 ? "sad" : mood === 6 ? "sleepy" : "hug",
       );
       setMoodDraft(null);
+      draft.clear();
       notify("Guardé este pedacito de tu día.");
     } catch (e) {
       setError(friendlyError(e));
@@ -86,7 +94,10 @@ export default function DiaryPanel() {
               key={m.label}
               aria-pressed={mood === i}
               title={m.label}
-              onClick={() => setMood(i)}
+              onClick={() => {
+                setMood(i);
+                setMoodDraft(i);
+              }}
             >
               <span>{m.face}</span>
               <small>{m.label}</small>
@@ -112,9 +123,17 @@ export default function DiaryPanel() {
           rows={4}
           maxLength={10000}
           value={note}
+          disabled={!draft.ready}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Hoy me sentí…"
         />
+        <small className="draft-note">
+          {preview
+            ? "Borrador temporal: se conserva hasta reiniciar esta prueba."
+            : draft.saved
+              ? "Texto guardado como borrador en este dispositivo."
+              : "Guardamos tu borrador mientras escribes, si el navegador permite almacenamiento."}
+        </small>
         <p className="muted">
           Puedes volver y cambiar la nota de hoy cuando quieras.
         </p>

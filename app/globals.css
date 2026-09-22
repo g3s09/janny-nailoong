@@ -2055,3 +2055,154 @@ audio {
 .preview-toolbar span {
   opacity: 0.8;
 }
+
+/* A small physical cue for each space, shared by both accounts. */
+.paper-dialog[data-section="diary"] {
+  transform-origin: 12% center;
+  border-left: 7px solid #ad9477;
+  background-image: linear-gradient(90deg, #cbb79622, transparent 30px);
+}
+.paper-dialog[data-section="mail"] .dialog-header,
+.admin-paper[data-section="mail"] .conversation-heading {
+  border-bottom: 3px double #d8bea1;
+  background-image: linear-gradient(150deg, #e5d4b526, transparent 45%);
+}
+.paper-dialog[data-section="memories"] {
+  border: 7px solid #fffdf8;
+}
+.paper-dialog[data-section="box"] {
+  border-top: 5px solid #b68c79;
+}
+.paper-dialog[data-section="calendar"] .dialog-header {
+  background: #f2efdf;
+}
+.conversation-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 0 18px;
+  margin-bottom: 18px;
+}
+.conversation-heading strong {
+  font:
+    22px Georgia,
+    serif;
+}
+.conversation-heading small {
+  display: block;
+  margin-top: 6px;
+  color: #7c6d57;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.conversation-heading button {
+  min-height: 44px;
+}
+.conversation-day {
+  align-self: center;
+  font-size: 11px;
+  color: #74654f;
+  padding: 7px 14px;
+  margin: 5px 0;
+  background: #e9e2d055;
+  border-radius: 99px;
+}
+.message {
+  animation: section-reveal 0.3s ease both;
+}
+.message header,
+.message small {
+  color: #796549;
+}
+.message time {
+  white-space: nowrap;
+}
+.draft-note {
+  display: block;
+  font-size: 11px;
+  color: #796c56;
+  line-height: 1.7;
+}
+.personal-touches,
+.admin-notifications {
+  margin: 20px 0;
+  padding: 18px 22px;
+  border: 1px solid #ded4bf;
+  border-radius: 16px;
+  background: #fffcf380;
+}
+.personal-touches summary,
+.admin-notifications summary {
+  cursor: pointer;
+  line-height: 1.7;
+}
+.personal-touches > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.personal-touches button {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 6px 10px;
+  padding: 17px;
+  border: 1px solid #e0d5bf;
+  border-radius: 12px;
+  background: #fffdf7;
+  color: #65573f;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.personal-touches button span {
+  grid-row: span 2;
+}
+.personal-touches small {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.personal-touches p {
+  font-size: 12px;
+  color: #796c56;
+}
+.push-settings {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e0d5bf;
+}
+.push-settings h3 {
+  font:
+    22px Georgia,
+    serif;
+}
+.push-settings p {
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 12px 0;
+}
+.push-settings .button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+@media (max-width: 600px) {
+  .personal-touches > div {
+    grid-template-columns: 1fr;
+  }
+  .conversation-heading {
+    align-items: flex-start;
+  }
+  .letter-history {
+    max-height: 48dvh;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .message,
+  .dialog-body > *,
+  .section-reveal {
+    animation: none;
+  }
+}

@@ -6,6 +6,7 @@ import type { Profile } from "@/lib/types";
 import WelcomeSequence from "./WelcomeSequence";
 import HomeScene from "./HomeScene";
 import Panels from "./Panels";
+import { PreviewDrafts } from "@/lib/use-draft";
 function ExperienceBody({ freshStart = false }: { freshStart?: boolean }) {
   const { profile, setPanel, toast, preview } = useWorld();
   const [name, setName] = useState("");
@@ -46,7 +47,9 @@ function ExperienceBody({ freshStart = false }: { freshStart?: boolean }) {
             onRepeat={() => {
               setPanel(null);
               setName("");
-              localStorage.removeItem(`janny-intro-v2:${profile.id}`);
+              try {
+                localStorage.removeItem(`janny-intro-v2:${profile.id}`);
+              } catch {}
               setIntro(true);
             }}
           />
@@ -54,7 +57,9 @@ function ExperienceBody({ freshStart = false }: { freshStart?: boolean }) {
             onRepeat={() => {
               setPanel(null);
               setName("");
-              localStorage.removeItem(`janny-intro-v2:${profile.id}`);
+              try {
+                localStorage.removeItem(`janny-intro-v2:${profile.id}`);
+              } catch {}
               setIntro(true);
             }}
           />
@@ -67,7 +72,7 @@ function ExperienceBody({ freshStart = false }: { freshStart?: boolean }) {
       )}
       {preview && (
         <div className="preview-label">
-          Vista local · los mensajes necesitan conectar Supabase
+          Vista de prueba · tus cambios no afectan las cuentas reales
         </div>
       )}
     </>
@@ -82,15 +87,18 @@ export default function Experience({
   preview: boolean;
   freshStart?: boolean;
 }) {
+  const [temporaryDrafts] = useState(() => new Map<string, string>());
   return (
     <MotionConfig reducedMotion="user">
-      <WorldProvider
-        profile={profile}
-        preview={preview}
-        ephemeral={freshStart && preview}
-      >
-        <ExperienceBody freshStart={freshStart} />
-      </WorldProvider>
+      <PreviewDrafts value={temporaryDrafts}>
+        <WorldProvider
+          profile={profile}
+          preview={preview}
+          ephemeral={freshStart && preview}
+        >
+          <ExperienceBody freshStart={freshStart} />
+        </WorldProvider>
+      </PreviewDrafts>
     </MotionConfig>
   );
 }

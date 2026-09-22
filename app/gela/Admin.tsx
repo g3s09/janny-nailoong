@@ -9,6 +9,9 @@ import { browserDb } from "@/lib/supabase/client";
 import MailPanel from "../components/MailPanel";
 import MemoriesPanel from "../components/MemoriesPanel";
 import ContentManager from "./ContentManager";
+import PersonalTouches from "./PersonalTouches";
+import PushSettings from "../components/PushSettings";
+import { clearDeviceSession } from "@/lib/device-session";
 function Panel() {
   const reduced = useReducedMotion();
   const router = useRouter();
@@ -32,6 +35,7 @@ function Panel() {
         <button
           className="secondary"
           onClick={async () => {
+            await clearDeviceSession(profile.id);
             const { error } = await browserDb().auth.signOut();
             if (error) {
               notify("No se pudo cerrar la sesión.");
@@ -63,6 +67,7 @@ function Panel() {
           </button>
         ))}
       </nav>
+      <PersonalTouches onChoose={setTab} />
       {error && (
         <p className="error-text">
           {error} <button onClick={() => void refresh()}>Reintentar</button>
@@ -71,9 +76,14 @@ function Panel() {
       <AnimatePresence mode="wait" initial={false}>
         <motion.section
           className="admin-paper"
+          data-section={tab}
           key={tab}
-          initial={{ opacity: 0, y: reduced ? 0 : 16 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{
+            opacity: 0,
+            y: reduced ? 0 : tab === "mail" ? 28 : 16,
+            rotate: reduced ? 0 : tab === "memories" ? -1 : 0,
+          }}
+          animate={{ opacity: 1, y: 0, rotate: 0 }}
           exit={{ opacity: 0, y: reduced ? 0 : -8 }}
           transition={{ duration: reduced ? 0 : 0.22 }}
         >
@@ -89,6 +99,10 @@ function Panel() {
           )}
         </motion.section>
       </AnimatePresence>
+      <details className="admin-notifications">
+        <summary>Avisos de nuevas cartas</summary>
+        <PushSettings />
+      </details>
       <p className="privacy-note">
         El diario y los estados de ánimo de Janny permanecen privados.
       </p>

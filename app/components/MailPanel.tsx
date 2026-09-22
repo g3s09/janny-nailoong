@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { useDraft } from "@/lib/use-draft";
 import { Mail, Send, Paperclip, CheckCheck } from "lucide-react";
 import { useWorld } from "@/lib/world-store";
 import { browserDb } from "@/lib/supabase/client";
@@ -8,8 +9,18 @@ import { prettyDate } from "@/lib/constants";
 import PrivateMedia from "./PrivateMedia";
 import WritingPrompts from "./WritingPrompts";
 export default function MailPanel({ admin = false }: { admin?: boolean }) {
-  const { data, profile, preview, refresh, sound, notify } = useWorld();
-  const [text, setText] = useState("");
+  const { data, profile, preview, refresh, sound, notify, say } = useWorld();
+  const draft = useDraft(`${profile.id}:mail`, "", !preview);
+  const text = draft.value;
+  const setText = draft.setValue;
+  const bottom = useRef<HTMLDivElement>(null);
+  const scrollToLatest = () =>
+    bottom.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+      block: "nearest",
+    });
   const [file, setFile] = useState<File | null>(null);
   const [important, setImportant] = useState(false);
   const [schedule, setSchedule] = useState("");
@@ -54,7 +65,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     e.preventDefault();
     if (preview) {
       setError(
-        "El buzón necesita conectar Supabase para que tu carta llegue de verdad.",
+        "Esta es una vista de prueba. Entra con tu cuenta para enviar una carta de verdad.",
       );
       return;
     }
@@ -82,18 +93,25 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
               : new Date().toISOString(),
         });
       if (error) throw new Error(error.message);
+      void fetch("/api/push/dispatch", { method: "POST" }).catch(() => {});
       setText("");
+      draft.clear();
       setFile(null);
       setFileKey((k) => k + 1);
       setSchedule("");
       setImportant(false);
       sound("letter");
+      say(
+        "Llevando tus palabras con muchísimo cuidado. Y sin migas de galleta.",
+        "wave",
+      );
       notify(
         schedule
           ? "Tu carta quedó programada."
           : "Tu carta ya está en el buzón.",
       );
       await refresh();
+      requestAnimationFrame(scrollToLatest);
     } catch (e) {
       if (attachment) await removeFile(attachment);
       setError(friendlyError(e));
@@ -103,6 +121,17 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
   }
   return (
     <div className="mail-panel">
+      <div className="conversation-heading">
+        <div>
+          <strong>
+            {recipient?.name || (admin ? "Janny" : "Tu persona favorita")}
+          </strong>
+          <small>Un espacio para los dos · sin prisa por responder</small>
+        </div>
+        <button type="button" className="text-button" onClick={scrollToLatest}>
+          Ver lo más reciente ↓
+        </button>
+      </div>
       <div className="letter-history" aria-label="Historial de cartas">
         {messages.length === 0 ? (
           <div className="empty-state">
@@ -115,40 +144,52 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
             </p>
           </div>
         ) : (
-          messages.map((m) => (
-            <article
-              key={m.id}
-              className={`message ${m.sender_id === profile.id ? "outgoing" : "incoming"} ${m.important ? "special-message" : ""}`}
-            >
-              <header>
-                <strong>
-                  {m.sender_id === profile.id ? "Tú" : admin ? "Janny" : "Gela"}
-                  {m.important ? " · una carta especial ♡" : ""}
-                </strong>
-                <time>{prettyDate(m.deliver_at, true)}</time>
-              </header>
-              <p>{m.body}</p>
-              {m.attachment && (
-                <PrivateMedia
-                  path={m.attachment}
-                  type={m.attachment_type ?? "image"}
-                  alt="Archivo de la carta"
-                />
+          messages.map((m, index) => (
+            <Fragment key={m.id}>
+              {(index === 0 ||
+                new Date(messages[index - 1].deliver_at).toLocaleDateString(
+                  "es-MX",
+                ) !== new Date(m.deliver_at).toLocaleDateString("es-MX")) && (
+                <p className="conversation-day">{prettyDate(m.deliver_at)}</p>
               )}
-              <small>
-                {new Date(m.deliver_at) > new Date() ? (
-                  "Programada"
-                ) : m.read_at ? (
-                  <>
-                    <CheckCheck size={13} /> Leída {prettyDate(m.read_at, true)}
-                  </>
-                ) : (
-                  "Entregada en el buzón"
+              <article
+                key={m.id}
+                className={`message ${m.sender_id === profile.id ? "outgoing" : "incoming"} ${m.important ? "special-message" : ""}`}
+              >
+                <header>
+                  <strong>
+                    {m.sender_id === profile.id
+                      ? "Tú"
+                      : recipient?.name || (admin ? "Janny" : "Gela")}
+                    {m.important ? " · una carta especial ♡" : ""}
+                  </strong>
+                  <time>{prettyDate(m.deliver_at, true)}</time>
+                </header>
+                <p>{m.body}</p>
+                {m.attachment && (
+                  <PrivateMedia
+                    path={m.attachment}
+                    type={m.attachment_type ?? "image"}
+                    alt="Archivo de la carta"
+                  />
                 )}
-              </small>
-            </article>
+                <small>
+                  {new Date(m.deliver_at) > new Date() ? (
+                    "Programada"
+                  ) : m.read_at ? (
+                    <>
+                      <CheckCheck size={13} /> Leída{" "}
+                      {prettyDate(m.read_at, true)}
+                    </>
+                  ) : (
+                    "Entregada en el buzón"
+                  )}
+                </small>
+              </article>
+            </Fragment>
           ))
         )}
+        <div ref={bottom} />
       </div>
       <form className="letter-composer" onSubmit={send}>
         <label htmlFor="letter-body">
@@ -173,8 +214,17 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
           maxLength={10000}
           placeholder="No tiene que ser algo importante. Puede ser simplemente un hola."
           value={text}
+          disabled={!draft.ready}
           onChange={(e) => setText(e.target.value)}
         />
+        <small className="draft-note">
+          {preview
+            ? "Borrador temporal: se conserva hasta reiniciar esta prueba."
+            : draft.saved
+              ? "Borrador guardado en este dispositivo."
+              : "Guardamos tu texto mientras escribes, si el navegador permite almacenamiento."}{" "}
+          Los archivos deben volver a seleccionarse.
+        </small>
         <div className="composer-tools">
           <label className="attachment-button">
             <Paperclip size={15} />

@@ -66,6 +66,7 @@ export default function MemoriesPanel({ admin = false }: { admin?: boolean }) {
       setPhoto(null);
       setAudio(null);
       notify("Un recuerdo más para guardar cerquita.");
+      say("Listo. A este momento ya le hice un sitio especial.", "happy");
     } catch (e) {
       await Promise.all(uploaded.map(removeFile));
       setError(friendlyError(e));
