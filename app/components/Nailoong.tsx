@@ -124,7 +124,7 @@ export default function Nailoong({
             ? "¿Qué haces? 😳"
             : taps.current === 3
               ? `${name}…`
-              : "¡YA TE VI! 😭",
+              : "¡YA TE VI. JANNY! 😭",
       );
       taps.current = 0;
       setBounce(0);
