@@ -8,6 +8,7 @@ import { WorldProvider, useWorld } from "@/lib/world-store";
 import type { Profile } from "@/lib/types";
 import { browserDb } from "@/lib/supabase/client";
 import MailPanel from "../components/MailPanel";
+import UnreadBadge from "../components/UnreadBadge";
 import MemoriesPanel from "../components/MemoriesPanel";
 import ContentManager from "./ContentManager";
 import PersonalTouches from "./PersonalTouches";
@@ -16,7 +17,7 @@ import { clearDeviceSession } from "@/lib/device-session";
 function Panel() {
   const reduced = useReducedMotion();
   const router = useRouter();
-  const { data, error, refresh, toast, notify, profile, loading, dataReady } =
+  const { data, error, refresh, toast, notify, profile, loading, dataReady, conversation } =
     useWorld();
   const [tab, setTab] = useState("mail");
   const tabs = [
@@ -66,6 +67,7 @@ function Panel() {
             onClick={() => setTab(t.id)}
           >
             {t.name}
+            {t.id === "mail" && <UnreadBadge count={conversation.unreadCount} />}
           </button>
         ))}
       </nav>
@@ -103,9 +105,6 @@ function Panel() {
       <Link className="text-button" href="/password">
         Cambiar mi contraseña
       </Link>
-      <p className="privacy-note">
-        El diario y los estados de ánimo de Janny permanecen privados.
-      </p>
       {toast && (
         <div className="toast" role="status">
           {toast}

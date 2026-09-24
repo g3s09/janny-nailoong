@@ -2,9 +2,42 @@
 import { useEffect, useRef } from "react";
 import { useWorld } from "./world-store";
 import { streak, today } from "./constants";
-export function useNarrative() {
-  const { data, loading, say } = useWorld();
+export function useNarrative(name: string) {
+  const { data, loading, say, panel, character } = useWorld();
   const greeted = useRef(false);
+  const idleIndex = useRef(0);
+  useEffect(() => {
+    if (loading || panel || character !== "idle") return;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      clearTimeout(timer);
+      if (document.visibilityState !== "visible") return;
+      timer = setTimeout(() => {
+        if (document.activeElement?.matches("input, textarea, select, [contenteditable=true]")) {
+          schedule();
+          return;
+        }
+        const phrases = [
+          "Tócame la pancita… prometo no hacer cosquillas. Bueno, casi.",
+          `Te quiero, ${name || "Janny"}. Así, sin motivo y con toda la pancita.`,
+          "Gela también te quiere, él me lo dijo. Pero shhhh… es un secreto.",
+          "Llevo un ratito sin merendar. Un ratito larguííísimo, según mi pancita.",
+          "¿Me das un abrazo? Hoy estoy especialmente apachurrable.",
+        ];
+        say(phrases[idleIndex.current++ % phrases.length], "happy");
+      }, 45000);
+    };
+    schedule();
+    window.addEventListener("pointerdown", schedule, { passive: true });
+    window.addEventListener("keydown", schedule);
+    document.addEventListener("visibilitychange", schedule);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("pointerdown", schedule);
+      window.removeEventListener("keydown", schedule);
+      document.removeEventListener("visibilitychange", schedule);
+    };
+  }, [loading, panel, character, say, name]);
   useEffect(() => {
     if (loading || greeted.current) return;
     const timer = setTimeout(() => {

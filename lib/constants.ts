@@ -35,7 +35,7 @@ export const moods = [
     response: "Descansar también cuenta. Soy un experto en eso.",
   },
 ];
-export const welcomeLetter = `Janny,\n\nEste pequeño rincón es solo tuyo.\n\nLo hice pensando en ti, en tus días buenos, en los no tan buenos y en todas esas pequeñas cosas que a veces merecen tener un lugar propio.\n\nAquí puedes entrar cuando quieras, dejar recuerdos, descubrir cosas y cuidar de Nailoong. También puedes escribirme desde el buzón si algún día te apetece.\n\nNo tienes que hacer nada especial. Solo entra, curiosea, diviértete y sé buena con Nailoong… aunque se coma la última galleta.\n\nEspero que este pequeño lugar logre sacarte alguna sonrisa de vez en cuando.\n\nCon cariño,\nGela.\n\nO Gus Gus. Depende del día. jsjs`;
+export const welcomeLetter = `Janny,\n\nTenía ganas de hacerte sonreír.\n\nLo hice pensando en ti, en tus días buenos, en los no tan buenos y en todas esas pequeñas cosas que a veces merecen tener un lugar propio.\n\nAquí puedes entrar cuando quieras, dejar recuerdos, descubrir cosas y cuidar de Nailoong. También puedes escribirme desde el buzón si algún día te apetece.\n\nNo tienes que hacer nada especial. Solo entra, curiosea, diviértete y sé buena con Nailoong… aunque se coma la última galleta.\n\nEspero que este pequeño lugar logre sacarte alguna sonrisa de vez en cuando.\n\nCon cariño,\nGela.\n\nO Gus Gus. Depende del día. jsjs`;
 export const foods = [
   { id: "cookie", name: "Galleta", icon: "🍪", cost: 3 },
   { id: "fruit", name: "Frutita", icon: "🍓", cost: 4 },

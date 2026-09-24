@@ -1587,10 +1587,17 @@ audio {
 }
 .unread-count {
   border-radius: 20px;
-  background: #b78168;
-  color: #fff8e9;
-  font-size: 9px;
-  padding: 1px 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  min-height: 20px;
+  background: #be293d;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 5px;
 }
 .celebration:after {
   content: "✦  ·  ♡  ·  ✦";
@@ -2225,4 +2232,46 @@ audio {
   .section-reveal {
     animation: none;
   }
+}
+
+/* Keep editable controls readable without disabling pinch zoom. */
+@media (max-width: 900px), (pointer: coarse) {
+  html body input:not([type="checkbox"]):not([type="radio"]),
+  html body textarea,
+  html body select,
+  html body [contenteditable="true"] {
+    font-size: max(16px, 1rem);
+    scroll-margin-block: 24px;
+  }
+}
+.mail-shortcut { position: relative; }
+.mail-shortcut .unread-count { position: absolute; top: -5px; right: -7px; border: 2px solid var(--paper, #faf7ef); }
+.admin-tabs button { display: inline-flex; align-items: center; gap: 7px; }
+.feeding-scene { position: absolute; inset: 0; pointer-events: none; }
+.feeding-food { position: absolute; left: 45%; top: 46%; font-size: 36px; animation: snack-bite 3.2s both; }
+.feeding-crumb { position: absolute; left: 52%; top: 53%; font-size: 38px; color: #985c27; opacity: 0; animation: snack-crumb 0.65s 0.8s 3; }
+.crumb-one { --crumb-x: -32px; }
+.crumb-two { --crumb-x: 28px; animation-delay: 1s; }
+.crumb-three { --crumb-x: 12px; animation-delay: 1.2s; }
+.feeding-yum { position: absolute; right: 0; top: 17%; padding: 6px 10px; border-radius: 16px; background: #fff5d9; color: #795426; font-size: 14px; animation: snack-yum 3.2s both; }
+@keyframes snack-bite {
+  0% { transform: translate(45px, 70px) rotate(25deg) scale(0.5); opacity: 0; }
+  18%, 30% { transform: translate(0, 0) rotate(-12deg) scale(1); opacity: 1; clip-path: inset(0); }
+  45% { transform: rotate(10deg) scale(0.9); clip-path: inset(0 28% 0 0); }
+  65% { transform: rotate(-8deg) scale(0.75); clip-path: inset(0 50% 15% 0); }
+  85%, 100% { transform: translate(0, -4px) scale(0.2); clip-path: inset(0 80% 40% 0); opacity: 0; }
+}
+@keyframes snack-crumb {
+  0% { opacity: 0; transform: translate(0, 0); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--crumb-x), 42px) rotate(60deg); }
+}
+@keyframes snack-yum {
+  0%, 15%, 100% { opacity: 0; transform: translateY(5px); }
+  25%, 85% { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .feeding-food, .feeding-yum { animation: none; }
+  .feeding-crumb { display: none; }
+  .has-mail { animation: none; }
 }

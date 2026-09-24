@@ -9,9 +9,11 @@ import {
   VolumeX,
   Moon,
   Sun,
+  Mail,
   Sparkles,
 } from "lucide-react";
 import Nailoong from "./Nailoong";
+import UnreadBadge from "./UnreadBadge";
 import RoomArt from "./RoomArt";
 import { useWorld } from "@/lib/world-store";
 import { moods, today } from "@/lib/constants";
@@ -26,13 +28,14 @@ export default function HomeScene({
   name: string;
   onRepeat: () => void;
 }) {
-  useNarrative();
+  useNarrative(name);
   const {
     prefs,
     updatePrefs,
     setPanel,
     speech,
     character,
+    treat,
     sound,
     data,
     say,
@@ -92,9 +95,10 @@ export default function HomeScene({
           </span>
         </Link>
         <div className="header-actions">
-          <span className="private-label">
-            <Heart size={13} /> Solo para ti
-          </span>
+          <button className="icon-button mail-shortcut" aria-label="Abrir mensajes" onClick={() => open("mail")}>
+            <Mail size={18} />
+            <UnreadBadge count={unread} />
+          </button>
           <button
             className="icon-button"
             aria-label={prefs.effects ? "Silenciar sonidos" : "Activar sonidos"}
@@ -183,6 +187,7 @@ export default function HomeScene({
             </div>
             <Nailoong
               animation={character}
+              treat={treat}
               size={210}
               name={name}
               accessory={prefs.accessory}
@@ -200,7 +205,7 @@ export default function HomeScene({
             onClick={() => open("mail")}
           >
             El buzón{" "}
-            {unread > 0 && <span className="unread-count">{unread}</span>}
+            <UnreadBadge count={unread} />
             <ArrowUpRight size={12} />
           </button>
           <button

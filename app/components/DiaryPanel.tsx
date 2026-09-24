@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, LockKeyhole } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { moods, prettyDate, today } from "@/lib/constants";
 import { useWorld } from "@/lib/world-store";
 import { browserDb } from "@/lib/supabase/client";
@@ -89,10 +89,6 @@ export default function DiaryPanel() {
   const viewed = data.moods.find((m) => m.day === selected);
   return (
     <>
-      <p className="privacy-note">
-        <LockKeyhole size={13} /> Este diario es solo tuyo. Gela no puede
-        leerlo.
-      </p>
       <form className="stack-form" onSubmit={save}>
         <fieldset className="form-fields" disabled={busy || !draft.ready}>
           <h3>¿Cómo se siente hoy tu mundo?</h3>

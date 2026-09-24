@@ -21,11 +21,11 @@ const titles = {
   letter: "Este lugar nació pensando en ti",
 };
 const subtitles = {
-  mail: "Un hola, una historia, eso que querías contar. Aquí llega hasta la otra persona.",
+  mail: "¿Qué me cuentas hoy?",
   memories:
     "No hace falta una ocasión especial para guardar algo que te hizo sonreír.",
   diary:
-    "No tienes que encontrar las palabras perfectas. Este espacio es solo tuyo.",
+    "¿Qué te gustaría recordar de hoy?",
   box: "Pequeñas cartas para acompañarte, justo cuando tú decidas.",
   calendar:
     "Fechas para recordar y pequeños motivos para celebrar lo cotidiano.",

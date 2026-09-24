@@ -99,8 +99,7 @@ export default function Pwa() {
                 el menú del navegador.
               </p>
               <p className="privacy-note">
-                Tendrás tu propio icono y una ventana para ustedes. Necesitas
-                conexión para recibir y enviar mensajes.
+                Necesitas conexión para recibir y enviar mensajes.
               </p>
             </div>
           </Dialog>

@@ -169,12 +169,7 @@ export default function LoginForm() {
         </p>
       )}
       <p className="privacy-note">
-        Solo las cuentas invitadas pueden entrar. No necesitas un enlace para
-        cada visita.
-      </p>
-      <p className="privacy-note">
-        La sesión se conserva en tu dispositivo. Si cierras sesión, puedes
-        volver con tu correo y contraseña.
+        Tu sesión quedará guardada en este dispositivo.
       </p>
     </form>
   );

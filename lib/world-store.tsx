@@ -35,6 +35,8 @@ type World = {
   panel: Panel;
   character: CharacterState;
   speech: string;
+  treat: { icon: string; id: number } | null;
+  feed: (icon: string) => void;
   toast: string;
   error: string;
   loading: boolean;
@@ -68,7 +70,7 @@ export function WorldProvider({
   const [moodDraft, setMoodDraft] = useState<number | null>(null);
   const [data, setData] = useState<Snapshot>(emptySnapshot);
   const [panel, setPanel] = useState<Panel>(null);
-  const { character, speech, toast, setCharacter, notify, say } =
+  const { character, speech, toast, treat, feed, setCharacter, notify, say } =
     useCharacter();
   const { prefs, prefsRef, updatePrefs, sound } = usePreferences(
     profile.id,
@@ -279,6 +281,8 @@ export function WorldProvider({
         panel,
         character,
         speech,
+        treat,
+        feed,
         toast,
         error: error || conversation.error,
         loading,

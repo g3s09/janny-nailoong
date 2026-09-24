@@ -14,6 +14,7 @@ type Props = {
   size?: number;
   name?: string;
   accessory?: string;
+  treat?: { icon: string; id: number } | null;
   onInteract?: () => void;
 };
 export default function Nailoong({
@@ -24,6 +25,7 @@ export default function Nailoong({
   size = 220,
   name = "Janny",
   accessory = "",
+  treat,
   onInteract,
 }: Props) {
   const [message, setMessage] = useState("");
@@ -145,7 +147,7 @@ export default function Nailoong({
         style={{ width: size, height: size, transformOrigin: "50% 92%" }}
         animate={motionState}
         transition={{
-          duration: energetic ? 1.1 : animation === "walk" ? 1 : 3.8,
+          duration: energetic ? 1.1 : animation === "eat" ? 0.35 : animation === "walk" ? 1 : 3.8,
           repeat: energetic ? 0 : Infinity,
           ease: "easeInOut",
         }}
@@ -183,6 +185,15 @@ export default function Nailoong({
           </span>
         )}
         {animation === "sleepy" && <span className="sleep-marks">z z Z</span>}
+        {treat && (
+          <span key={treat.id} className="feeding-scene" aria-hidden="true">
+            <span className="feeding-food">{treat.icon}</span>
+            <span className="feeding-crumb crumb-one">·</span>
+            <span className="feeding-crumb crumb-two">·</span>
+            <span className="feeding-crumb crumb-three">·</span>
+            <span className="feeding-yum">ñam ♡</span>
+          </span>
+        )}
       </motion.button>
     </div>
   );

@@ -54,7 +54,8 @@ export function useConversation(
       .eq("recipient_id", profileId)
       .is("read_at", null)
       .lte("deliver_at", new Date().toISOString());
-    if (!error && version === unreadVersion.current) setUnreadCount(count ?? 0);
+    if (error) throw error;
+    if (version === unreadVersion.current) setUnreadCount(count ?? 0);
   }, [preview, profileId]);
   const merge = useCallback(
     (rows: Message[], announce = true) => {
@@ -196,6 +197,7 @@ export function useConversation(
           if (!id) return;
           if (event.eventType === "DELETE") {
             setMessages((current) => current.filter((m) => m.id !== id));
+            void refreshUnread().catch((e) => { if (live) setError(friendlyError(e)); });
             return;
           }
           const { data, error } = await db
@@ -205,7 +207,7 @@ export function useConversation(
             .maybeSingle();
           if (live && !error && data) {
             merge([data as Message]);
-            void refreshUnread();
+            void refreshUnread().catch((e) => { if (live) setError(friendlyError(e)); });
           }
         },
       )

@@ -33,6 +33,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
   const setSchedule = (schedule: string) =>
     draft.setValue((v) => ({ ...v, schedule }));
   const bottom = useRef<HTMLDivElement>(null);
+  const conversationRoot = useRef<HTMLDivElement>(null);
   const scrollToLatest = () =>
     bottom.current?.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -58,16 +59,35 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
   useEffect(() => {
     if (preview || !unread) return;
     let live = true;
-    async function mark() {
+    const pendingReads = new Set<string>();
+    const visible = new Set<string>();
+    async function mark(id: string) {
+      if (document.visibilityState !== "visible" || pendingReads.has(id)) return;
+      pendingReads.add(id);
       try {
-        await markRead(unread.split(","));
+        await markRead([id]);
       } catch (e) {
         if (live) setError(friendlyError(e));
+      } finally {
+        pendingReads.delete(id);
       }
     }
-    void mark();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const id = (entry.target as HTMLElement).dataset.messageId!;
+        if (entry.isIntersecting) {
+          visible.add(id);
+          void mark(id);
+        } else visible.delete(id);
+      });
+    }, { threshold: 0.1 });
+    conversationRoot.current?.querySelectorAll<HTMLElement>("[data-unread=true]").forEach((node) => observer.observe(node));
+    const onVisible = () => visible.forEach((id) => void mark(id));
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       live = false;
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [unread, preview, markRead]);
   async function send(e: React.FormEvent) {
@@ -166,13 +186,12 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
           <strong>
             {recipient?.name || (admin ? "Janny" : "Tu persona favorita")}
           </strong>
-          <small>Un espacio para los dos · sin prisa por responder</small>
         </div>
         <button type="button" className="text-button" onClick={scrollToLatest}>
           Ver lo más reciente ↓
         </button>
       </div>
-      <div className="letter-history" aria-label="Historial de cartas">
+      <div ref={conversationRoot} className="letter-history" aria-label="Historial de cartas">
         {conversation.hasOlder && (
           <button
             type="button"
@@ -209,6 +228,8 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
               )}
               <article
                 key={m.id}
+                data-message-id={m.id}
+                data-unread={m.recipient_id === profile.id && !m.read_at}
                 className={`message ${m.sender_id === profile.id ? "outgoing" : "incoming"} ${m.important ? "special-message" : ""}`}
               >
                 <header>
@@ -346,7 +367,6 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
                 : "Enviar carta"}
           <Send size={15} />
         </button>
-        <p className="privacy-note">Solo ustedes dos pueden leer este buzón.</p>
       </form>
     </div>
   );

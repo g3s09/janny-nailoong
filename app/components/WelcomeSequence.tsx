@@ -3,8 +3,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import Nailoong from "./Nailoong";
 const lines = [
-  "Este pequeño rincón es solo tuyo.",
-  "Fue creado especialmente para ti.",
+  "Hola. Qué bonito que llegaste.",
+  "Tengo algo que enseñarte.",
   "Aquí habrá recuerdos, pequeñas sorpresas…",
   "y alguien esperando conocerte.",
 ];

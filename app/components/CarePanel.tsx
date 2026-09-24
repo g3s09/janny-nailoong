@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 import { foods, shop, streak } from "@/lib/constants";
 import { useWorld } from "@/lib/world-store";
 import { friendlyError } from "@/lib/data";
@@ -14,19 +14,15 @@ export default function CarePanel() {
     notify,
     setPanel,
     sound,
+    feed,
   } = useWorld();
-  const [busy, setBusy] = useState(false);
+  const { busy, acquire, release } = useSubmitLock();
   async function buy(id: string) {
-    setBusy(true);
+    if (!acquire()) return;
     try {
       await purchase(id);
       if (foods.some((f) => f.id === id)) {
-        say(
-          id === "fruit"
-            ? "¿Esto es una galleta disfrazada? Está buena."
-            : "Era justo lo que necesitaba. Bueno, y otra.",
-          "eat",
-        );
+        feed(foods.find((f) => f.id === id)!.icon);
         sound("food");
       } else {
         const item = shop.find((s) => s.id === id);
@@ -38,7 +34,7 @@ export default function CarePanel() {
     } catch (e) {
       notify(friendlyError(e));
     } finally {
-      setBusy(false);
+      release();
     }
   }
   return (
