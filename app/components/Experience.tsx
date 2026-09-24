@@ -72,7 +72,7 @@ function ExperienceBody({ freshStart = false }: { freshStart?: boolean }) {
       )}
       {preview && (
         <div className="preview-label">
-          Vista de prueba · tus cambios no afectan las cuentas reales
+          Vista de prueba · sin guardar cambios
         </div>
       )}
     </>

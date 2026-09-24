@@ -80,7 +80,7 @@ export default function Pwa() {
       <AnimatePresence>
         {help && (
           <Dialog
-            title="Tu rincón, siempre cerquita"
+            title="Ponme en tu pantalla"
             subtitle="Guárdalo en tu pantalla de inicio."
             onClose={() => setHelp(false)}
           >

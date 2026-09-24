@@ -8,27 +8,27 @@ export default function CalendarPanel() {
     {
       title: "Día de Muertos",
       day: `${year}-11-02`,
-      body: "Un lugar para recordar con cariño.",
+      body: "Hoy quiero recordar contigo a quienes extrañamos.",
     },
     {
       title: "Navidad",
       day: `${year}-12-25`,
-      body: "Hoy la habitación se viste de luz.",
+      body: "Quería desearte una bonita Navidad, Janny. Te mando un abrazo.",
     },
     {
       title: "Año Nuevo",
       day: `${year}-01-01`,
-      body: "Otro comienzo, a nuestro ritmo.",
+      body: "Quiero seguir compartiendo cosas contigo este año.",
     },
     {
       title: "San Valentín",
       day: `${year}-02-14`,
-      body: "Qué bonito coincidir.",
+      body: "Me da mucho gusto haberte encontrado, Janny.",
     },
   ];
   return (
     <>
-      <p className="muted">Hay días que tienen un lugar especial aquí.</p>
+      <p className="muted">Aquí quiero ir guardando las fechas que no se me deben olvidar contigo jsjs.</p>
       <div className="event-list">
         {[...data.events, ...annual]
           .sort((a, b) => a.day.slice(5).localeCompare(b.day.slice(5)))

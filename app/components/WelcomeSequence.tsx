@@ -3,10 +3,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import Nailoong from "./Nailoong";
 const lines = [
-  "Hola. Qué bonito que llegaste.",
-  "Tengo algo que enseñarte.",
-  "Aquí habrá recuerdos, pequeñas sorpresas…",
-  "y alguien esperando conocerte.",
+  "Holaaa, Janny.",
+  "Hice algo para ti y ya quería enseñártelo.",
+  "Te dejé dónde escribirme y guardar cosas nuestras…",
+  "Y sí, también traje a Nailoong jsjs.",
 ];
 export default function WelcomeSequence({
   initialName,
@@ -122,7 +122,7 @@ export default function WelcomeSequence({
             {stage === "name" && (
               <>
                 <h1>Antes de enseñarte todo esto…</h1>
-                <p>¿Me dices tu nombre?</p>
+                <p>¿Cómo quieres que te llame?</p>
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -156,7 +156,7 @@ export default function WelcomeSequence({
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.8 }}
                 >
-                  Me gusta. Entonces queda decidido.
+                  Me gusta. Así te voy a llamar.
                 </motion.p>
                 <motion.h2
                   initial={{ opacity: 0, y: 10 }}
@@ -170,9 +170,9 @@ export default function WelcomeSequence({
                   animate={{ opacity: 1 }}
                   transition={{ delay: 5.5 }}
                 >
-                  Todo esto lo hizo Gela. O Gus Gus.
+                  Gela me dijo que te cuidara.
                   <br />
-                  No entendí muy bien.
+                  Yo entendí que también me darías galletas.
                 </motion.p>
                 <motion.button
                   className="primary"
@@ -181,7 +181,7 @@ export default function WelcomeSequence({
                   transition={{ delay: 7 }}
                   onClick={() => onComplete(name.trim())}
                 >
-                  Hay una carta para ti <span>💌</span>
+                  Gela te dejó una carta <span>💌</span>
                 </motion.button>
               </>
             )}

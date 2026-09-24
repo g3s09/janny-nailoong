@@ -57,18 +57,16 @@ export default function SettingsPanel({ onRepeat }: { onRepeat: () => void }) {
         ↺ Repetir bienvenida
       </button>
       <button className="text-button" onClick={() => setPanel("letter")}>
-        Volver a leer la carta de Gela
+        Volver a leer lo que te escribí
       </button>
       <div className="install-note">
-        <h3>Llévate este rincón contigo.</h3>
+        <h3>Déjame un lugarcito en tu pantalla.</h3>
         <p>
           En iPhone: Compartir → Añadir a pantalla de inicio. En Android o PC:
           usa «Instalar aplicación» en el menú del navegador.
         </p>
         <p>
-          Necesita una dirección HTTPS para instalarse fuera de este equipo. Sin
-          conexión aparecerá una pequeña pantalla de compañía; tus cartas y tu
-          diario no se almacenan en la caché.
+          Para abrir tus cartas o guardar algo nuevo necesitas conexión.
         </p>
       </div>
       <PushSettings />

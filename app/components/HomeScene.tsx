@@ -65,9 +65,9 @@ export default function HomeScene({
       e.day === today() || (e.annual && e.day.slice(5) === today().slice(5)),
   );
   const holiday = {
-    "12-25": "Una Navidad cerquita",
+    "12-25": "Feliz Navidad, Janny",
     "01-01": "Otro comienzo contigo",
-    "02-14": "Qué bonito coincidir",
+    "02-14": "Qué bonito haberte encontrado",
     "11-02": "Recordar también es querer",
   }[today().slice(5)];
   function open(panel: Panel) {
@@ -91,7 +91,7 @@ export default function HomeScene({
           <span className="brand-sun">✳</span>
           <span>
             el rincón de <strong>Janny</strong>
-            <small>UN LUGAR HECHO CON CARIÑO</small>
+            <small>DE MÍ, PARA TI</small>
           </span>
         </Link>
         <div className="header-actions">
@@ -121,7 +121,7 @@ export default function HomeScene({
       <main className="world-main">
         <div className="scene-heading">
           <div>
-            <p className="eyebrow">AQUÍ, EL MUNDO VA MÁS DESPACIO</p>
+            <p className="eyebrow">QUÉ GUSTO VERTE POR AQUÍ</p>
             <h1>
               {hour < 12
                 ? "Buenos días"
@@ -130,7 +130,7 @@ export default function HomeScene({
                   : "Una noche tranquila"}
               , {name || "Janny"}.
             </h1>
-            <p>Deja el día afuera. Este ratito es tuyo.</p>
+            <p>Tenía ganas de hacer algo bonito para ti. Ojalá te guste, Janny.</p>
           </div>
           <button
             className="time-switch"
@@ -170,7 +170,7 @@ export default function HomeScene({
           )}
           <div className="room-caption">
             <span className="status-dot" />
-            {special?.title || holiday || "Tu pequeño refugio"}
+            {special?.title || holiday || "Quédate un ratito conmigo"}
           </div>
           <span className="room-coordinate">
             {{
@@ -204,7 +204,7 @@ export default function HomeScene({
             className={`hotspot mail-spot ${unread ? "has-mail" : ""}`}
             onClick={() => open("mail")}
           >
-            El buzón{" "}
+            Escríbeme{" "}
             <UnreadBadge count={unread} />
             <ArrowUpRight size={12} />
           </button>
@@ -244,7 +244,7 @@ export default function HomeScene({
             onClick={() => updatePrefs({ night: !night })}
           />
           <div className="room-instruction">
-            <Sparkles size={13} /> Cada objeto guarda un pedacito de este lugar.
+            <Sparkles size={13} /> Te dejé varias cositas. Toca una y mira qué hay.
           </div>
           {loading && (
             <span className="room-loading">Abriendo tus recuerdos…</span>
@@ -274,14 +274,14 @@ export default function HomeScene({
             </div>
           </div>
           <p className="handwritten">
-            No tienes que hacer nada especial.
+            Te quiero mucho, Janny.
             <br />
-            Solo ser tú. <Heart size={14} />
+            Por si hoy no te lo había dicho. <Heart size={14} />
           </p>
         </div>
         <footer className="world-footer">
           <button className="text-button" onClick={() => open("care")}>
-            ✦ {data.balance} Nailocoins · pequeños detalles
+            ✦ {data.balance} Nailocoins
           </button>
           <button className="text-button" onClick={() => open("letter")}>
             Con cariño, Gela <Heart size={12} />

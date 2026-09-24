@@ -33,7 +33,7 @@ export default function BoxPanel() {
       }
       setOpened(letter);
       sound("letter");
-      say("Esta estaba esperando el momento de acompañarte.", "hug");
+      say("Gela me encargó este sobre. Te lo doy sin miguitas, prometido.", "hug");
     } catch (e) {
       setError(friendlyError(e));
     } finally {
@@ -61,10 +61,9 @@ export default function BoxPanel() {
           {!data.open_when.length ? (
             <div className="empty-state">
               <MailOpen size={38} />
-              <h3>Para el momento justo.</h3>
+              <h3>Tengo cosas que quiero decirte.</h3>
               <p>
-                Las cartas que Gela deje aquí te esperarán sin prisa. Aún no hay
-                ninguna.
+                Todavía no te he dejado una carta aquí, Janny. Mientras, escríbeme; me va a dar gusto leerte.
               </p>
             </div>
           ) : (
@@ -81,19 +80,20 @@ export default function BoxPanel() {
                   <Heart size={18} />
                   <small>
                     {l.once && l.opened_at
-                      ? "Ya fue abierta · guardada en tu historia"
+                      ? "Ya la abriste · una sola lectura"
                       : l.opened_at
-                        ? "Siempre puedes volver"
-                        : "Una carta para ti"}
+                        ? "Léeme otra vez si quieres"
+                        : l.once
+                          ? "De mí, para ti · una sola lectura"
+                          : "De mí, para ti ♡"}
                   </small>
                 </button>
               ))}
             </div>
           )}
-          <p className="muted">
-            Las cartas de una sola apertura se leen al abrirlas y después quedan
-            cerradas. Las demás puedes releerlas siempre.
-          </p>
+          {data.open_when.some((letter) => letter.once) && <p className="muted">
+            Si un sobre dice «una sola lectura», léelo antes de cerrarlo. Los demás puedes abrirlos cuantas veces quieras.
+          </p>}
         </>
       )}
       {error && (

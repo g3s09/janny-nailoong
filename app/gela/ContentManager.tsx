@@ -295,7 +295,7 @@ export default function ContentManager({ table }: { table: Table }) {
           <div className="managed-list">
             {data[table].length === 0 && (
               <div className="empty-state">
-                <h3>Un espacio listo para tus ideas.</h3>
+                <h3>Todavía no he añadido nada aquí.</h3>
                 <p>
                   Los detalles que guardes aquí aparecerán en el rincón de
                   Janny.

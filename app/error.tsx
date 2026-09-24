@@ -4,10 +4,9 @@ export default function ErrorPage({ reset }: { reset: () => void }) {
     <main className="login-screen">
       <div className="login-card">
         <span className="brand-sun">✳</span>
-        <h1>Se nos enredó un hilito.</h1>
+        <h1>Esto no cargó bien.</h1>
         <p>
-          No pudimos abrir esta parte del rincón. Tus cosas guardadas siguen en
-          su lugar.
+          Intenta abrirlo otra vez en un momento.
         </p>
         <button className="primary" onClick={reset}>
           Volver a intentarlo

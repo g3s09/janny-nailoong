@@ -9,19 +9,19 @@ export default function PersonalTouches({
   const steps = [
     {
       tab: "memories",
-      title: "Su primera foto",
+      title: "Nuestra primera foto",
       description: "Un momento real, aunque sea de un día cualquiera.",
       done: data.memories.some((m) => m.attachment),
     },
     {
       tab: "memories",
-      title: "Un audio con tu voz",
+      title: "Un audio para Janny",
       description: "Puedes adjuntar una grabación a un recuerdo.",
       done: data.memories.some((m) => m.audio),
     },
     {
       tab: "events",
-      title: "Una fecha de ustedes",
+      title: "Una fecha nuestra",
       description: "Un cumpleaños, un encuentro o algo que quieran celebrar.",
       done: data.events.length > 0,
     },
@@ -35,7 +35,7 @@ export default function PersonalTouches({
   return (
     <details className="personal-touches">
       <summary>
-        Hazlo más de ustedes · {steps.filter((s) => s.done).length} de 4
+        Mis detalles para Janny · {steps.filter((s) => s.done).length} de 4
         detalles
       </summary>
       <div>
@@ -47,7 +47,7 @@ export default function PersonalTouches({
           </button>
         ))}
       </div>
-      <p>Solo recuerdos reales. Elige tú las palabras y los momentos.</p>
+
     </details>
   );
 }

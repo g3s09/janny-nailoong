@@ -11,7 +11,7 @@ export default function WritingPrompts({
   return (
     <div className="writing-prompts">
       <p>
-        <Sparkles size={14} aria-hidden="true" /> Una pequeña idea para empezar
+        <Sparkles size={14} aria-hidden="true" /> ¿Por dónde empezar?
       </p>
       <div role="group" aria-label="Ideas para escribir">
         {ideas.map((idea) => (
@@ -20,9 +20,7 @@ export default function WritingPrompts({
           </button>
         ))}
       </div>
-      <small>
-        Elige una y hazla tuya. También puedes escribir a tu manera.
-      </small>
+
     </div>
   );
 }

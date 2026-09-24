@@ -23,7 +23,7 @@ export default async function Preview() {
       <nav className="preview-toolbar">
         <a href="/gela">Volver a mi panel</a>
         <a href="/preview">Reiniciar prueba desde cero</a>
-        <span>Prueba independiente · sin datos de Janny</span>
+        <span>Vista de Janny · prueba</span>
       </nav>
       <Experience
         profile={{ id: "temporary-preview", name: "", role: "janny" }}

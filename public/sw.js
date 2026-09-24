@@ -1,4 +1,4 @@
-const CACHE = "janny-public-shell-v1";
+const CACHE = "janny-public-shell-v2";
 const SHELL = ["/offline.html","/nailoong/nailoong-idle.png","/icon.svg","/icons/icon-192.png","/icons/icon-512.png"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));self.skipWaiting();});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith("janny-public-shell-")&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});

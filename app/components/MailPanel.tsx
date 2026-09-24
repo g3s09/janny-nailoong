@@ -184,7 +184,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
       <div className="conversation-heading">
         <div>
           <strong>
-            {recipient?.name || (admin ? "Janny" : "Tu persona favorita")}
+            {recipient?.name || (admin ? "Janny" : "Gela")}
           </strong>
         </div>
         <button type="button" className="text-button" onClick={scrollToLatest}>
@@ -210,11 +210,11 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
         {messages.length === 0 ? (
           <div className="empty-state">
             <Mail size={36} />
-            <h3>Las palabras también abrazan.</h3>
+            <h3>{admin ? "Mi conversación con Janny" : "Cuéntame, Janny."}</h3>
             <p>
               {admin
-                ? "Aquí aparecerán las cartas de Janny. Puedes dejarle la primera."
-                : "Todavía no hay cartas. Puedes dejarle unas palabras a Gela."}
+                ? "Todavía no hay mensajes. Escribirle a Janny:"
+                : "Puede ser cómo te fue, algo que te dio risa o nada más un hola. Yo feliz de leerte."}
             </p>
           </div>
         ) : (
@@ -273,7 +273,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
           disabled={busy || !draft.ready || Boolean(pending)}
         >
           <label htmlFor="letter-body">
-            {admin ? "Unas palabras para Janny" : "Querido Gela…"}
+            {admin ? "Mi mensaje para Janny" : "Escríbeme lo que quieras, Janny"}
           </label>
           {!text && (
             <WritingPrompts
@@ -292,7 +292,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
             id="letter-body"
             rows={4}
             maxLength={10000}
-            placeholder="No tiene que ser algo importante. Puede ser simplemente un hola."
+            placeholder={admin ? "Janny, te quería contar…" : "Gela, hoy…"}
             value={text}
             disabled={!draft.ready}
             onChange={(e) => setText(e.target.value)}

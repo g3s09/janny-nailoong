@@ -35,7 +35,20 @@ export const moods = [
     response: "Descansar también cuenta. Soy un experto en eso.",
   },
 ];
-export const welcomeLetter = `Janny,\n\nTenía ganas de hacerte sonreír.\n\nLo hice pensando en ti, en tus días buenos, en los no tan buenos y en todas esas pequeñas cosas que a veces merecen tener un lugar propio.\n\nAquí puedes entrar cuando quieras, dejar recuerdos, descubrir cosas y cuidar de Nailoong. También puedes escribirme desde el buzón si algún día te apetece.\n\nNo tienes que hacer nada especial. Solo entra, curiosea, diviértete y sé buena con Nailoong… aunque se coma la última galleta.\n\nEspero que este pequeño lugar logre sacarte alguna sonrisa de vez en cuando.\n\nCon cariño,\nGela.\n\nO Gus Gus. Depende del día. jsjs`;
+export const welcomeLetter = `Janny,
+
+Hice todo esto pensando en ti. Quería darte algo que pudieras abrir cuando se te antojara y decir: «esto me lo hizo Gela» jsjs.
+
+Escríbeme lo que quieras. Cómo te fue, algo que te dio risa, algo que traes en la cabeza… me gusta saber de ti. No tiene que ser una carta enorme; con un hola tuyo ya me da gusto.
+
+También quiero que guardemos fotos y cosas nuestras. Y en los sobres te iré dejando palabras para esos días en los que quisiera estar ahí y darte un abrazo.
+
+Te traje a Nailoong para que te haga compañía. Cuídalo, pero aguas: te va a pedir galletas como si no hubiera comido en tres días.
+
+Ojalá te guste, Janny. Le puse mucho cariño porque te quiero mucho.
+
+Gela.
+Tu Gus Gus ♡`;
 export const foods = [
   { id: "cookie", name: "Galleta", icon: "🍪", cost: 3 },
   { id: "fruit", name: "Frutita", icon: "🍓", cost: 4 },

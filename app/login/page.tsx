@@ -5,10 +5,10 @@ export default function Login() {
       <div className="login-card">
         <span className="brand-sun">✳</span>
         <p className="eyebrow">EL RINCÓN DE JANNY</p>
-        <h1>Tu lugar sigue aquí.</h1>
-        <p>Tu correo, tu contraseña y un ratito para ti.</p>
+        <h1>Qué gusto que volviste.</h1>
+        <p>Entra con tu correo y contraseña.</p>
         <LoginForm />
-        <p className="handwritten">Hay alguien esperando saludarte.</p>
+        <p className="handwritten">Te dejé esto con mucho cariño. — Gela</p>
       </div>
     </main>
   );

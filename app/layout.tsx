@@ -3,7 +3,7 @@ import "./globals.css";
 import Pwa from "./components/Pwa";
 export const metadata: Metadata = {
   title: "El rincón de Janny",
-  description: "Un pequeño lugar hecho con cariño.",
+  description: "Janny, hice esto pensando en ti. — Gela",
   robots: { index: false, follow: false, nocache: true },
   icons: { icon: "/icon.svg", apple: "/icons/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "Mi rincón", statusBarStyle: "default" },

@@ -31,7 +31,7 @@ export default function PushSettings() {
           setState(
             config.ready
               ? "Puedes recibir una señal cuando llegue una carta."
-              : "Los avisos externos están pendientes de configuración del servidor.",
+              : "Los avisos fuera de la app todavía no están disponibles.",
           );
         }
       } catch {
@@ -74,7 +74,7 @@ export default function PushSettings() {
       });
       if (!response.ok) throw new Error();
       setState(
-        "Avisos activados en este dispositivo. El contenido de tus cartas permanece privado.",
+        "Listo, los avisos están activados en este dispositivo.",
       );
     } catch {
       setState(
@@ -103,7 +103,7 @@ export default function PushSettings() {
   return (
     <section className="push-settings">
       <h3>Una señal cuando llegue una carta</h3>
-      <p>El aviso no muestra nombres, texto ni archivos de la conversación.</p>
+
       <p role="status">{state}</p>
       {key && (
         <div className="button-row">

@@ -11,27 +11,27 @@ import CalendarPanel from "./CalendarPanel";
 import SettingsPanel from "./SettingsPanel";
 import { AnimatePresence } from "motion/react";
 const titles = {
-  mail: "De mi buzón al tuyo",
-  memories: "Lo bonito se queda",
-  diary: "Un pedacito de hoy",
-  box: "Para cuando lo necesites",
-  calendar: "Días que brillan",
+  mail: "Escríbeme, Janny",
+  memories: "Nuestros recuerdos",
+  diary: "Tu diario",
+  box: "Ábrelo cuando…",
+  calendar: "Nuestras fechas",
   care: "Un ratito con Nailoong",
   settings: "A tu manera",
-  letter: "Este lugar nació pensando en ti",
+  letter: "Te quería decir algo",
 };
 const subtitles = {
-  mail: "¿Qué me cuentas hoy?",
+  mail: "Escríbeme lo que quieras, Janny. Me gusta saber de ti.",
   memories:
-    "No hace falta una ocasión especial para guardar algo que te hizo sonreír.",
+    "Quiero guardar contigo esas cosas que nos hacen sonreír.",
   diary:
-    "¿Qué te gustaría recordar de hoy?",
-  box: "Pequeñas cartas para acompañarte, justo cuando tú decidas.",
+    "Te dejé un diario para que escribas lo que tú quieras.",
+  box: "Para esos días en que quisiera estar ahí contigo. Abre la que necesites.",
   calendar:
-    "Fechas para recordar y pequeños motivos para celebrar lo cotidiano.",
-  care: "A veces el mejor plan es compartir un ratito, sin hacer nada extraordinario.",
-  settings: "Los sonidos, la luz y los pequeños detalles, a tu ritmo.",
-  letter: "Antes de empezar, hay unas palabras esperando por ti.",
+    "Hay días que quiero recordar contigo.",
+  care: "Te encargo a Nailoong. Si pide otra galleta, no le creas que no ha comido jsjs.",
+  settings: "Ponlo como más te guste.",
+  letter: "Esto sí quería que lo leyeras antes de empezar.",
 };
 export default function Panels({ onRepeat }: { onRepeat: () => void }) {
   const { panel, setPanel, loading, dataReady, error, refresh } = useWorld();
@@ -75,7 +75,7 @@ export default function Panels({ onRepeat }: { onRepeat: () => void }) {
               <span className="letter-seal">♡</span>
               <p className="letter-text">{welcomeLetter}</p>
               <button className="primary" onClick={() => setPanel(null)}>
-                Entrar a nuestra habitación →
+                Ver qué más hay →
               </button>
             </article>
           )}

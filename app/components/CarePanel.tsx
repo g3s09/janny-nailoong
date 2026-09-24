@@ -44,13 +44,13 @@ export default function CarePanel() {
           ✦ {data.balance} <small>Nailocoins</small>
         </span>
         <p>
-          {data.visits.length} visitas bonitas ·{" "}
+          {data.visits.length} visitas ·{" "}
           {streak(data.visits.map((v) => v.day))} días seguidos
         </p>
       </div>
       <p className="muted">
         Diez monedas al venir cada día. Algunos detalles también regalan tres.
-        Sin compras reales y sin prisa.
+        No cuestan dinero real.
       </p>
       <div className="care-actions">
         <button
@@ -89,7 +89,7 @@ export default function CarePanel() {
           ↟ Un saltito
         </button>
       </div>
-      <h3>Algo rico para compartir</h3>
+      <h3>¿Qué le damos de comer?</h3>
       <div className="shop-grid">
         {foods.map((f) => (
           <button
@@ -103,7 +103,7 @@ export default function CarePanel() {
           </button>
         ))}
       </div>
-      <h3>Pequeños mundos, pequeños detalles</h3>
+      <h3>Algo para consentirlo</h3>
       <div className="shop-grid">
         {shop.map((item) => {
           const owned = data.unlocks.some((u) => u.item === item.id);

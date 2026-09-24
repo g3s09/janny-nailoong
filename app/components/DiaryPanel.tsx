@@ -77,7 +77,7 @@ export default function DiaryPanel() {
       );
       setMoodDraft(null);
       draft.clear();
-      notify("Guardé este pedacito de tu día.");
+      notify("Tu nota quedó guardada.");
     } catch (e) {
       setError(friendlyError(e));
     } finally {
@@ -91,7 +91,7 @@ export default function DiaryPanel() {
     <>
       <form className="stack-form" onSubmit={save}>
         <fieldset className="form-fields" disabled={busy || !draft.ready}>
-          <h3>¿Cómo se siente hoy tu mundo?</h3>
+          <h3>¿Cómo te sientes hoy, Janny?</h3>
           <div className="mood-picker">
             {moods.map((m, i) => (
               <button
@@ -109,7 +109,7 @@ export default function DiaryPanel() {
               </button>
             ))}
           </div>
-          <label htmlFor="diary-note">Si quieres, puedes dejarlo aquí.</label>
+          <label htmlFor="diary-note">Lo que quieras escribir para ti</label>
           {!note && (
             <WritingPrompts
               ideas={[
@@ -204,8 +204,8 @@ export default function DiaryPanel() {
           <strong>{prettyDate(selected)}</strong>
           <p>
             {viewed
-              ? viewed.note || "A veces una carita lo dice todo."
-              : "Este día no tiene nota. También está bien."}
+              ? viewed.note || "Ese día guardaste una carita."
+              : "No escribiste una nota este día."}
           </p>
         </div>
       </div>

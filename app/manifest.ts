@@ -3,7 +3,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "El rincón de Janny",
     short_name: "Mi rincón",
-    description: "Un pequeño lugar hecho con cariño.",
+    description: "Janny, hice esto pensando en ti. — Gela",
     lang: "es",
     start_url: "/",
     scope: "/",

@@ -31,9 +31,9 @@ function Panel() {
     <main className="admin-shell">
       <header>
         <div>
-          <p className="eyebrow">EL OTRO LADO DEL RINCÓN</p>
-          <h1>Con cariño, {profile.name}.</h1>
-          <p>Aquí preparas las pequeñas cosas que llegarán hasta Janny.</p>
+          <p className="eyebrow">MIS COSAS PARA JANNY</p>
+          <h1>Hola, {profile.name}.</h1>
+          <p>Mis mensajes, recuerdos y cartas para ella.</p>
         </div>
         <button
           className="secondary"

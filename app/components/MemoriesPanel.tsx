@@ -93,7 +93,7 @@ export default function MemoriesPanel({ admin = false }: { admin?: boolean }) {
       setAudio(null);
       notify(
         updated
-          ? "Un recuerdo más para guardar cerquita."
+          ? "Recuerdo guardado."
           : "El recuerdo quedó guardado. Vuelve a abrir la sección para actualizar la lista.",
       );
       say("Listo. A este momento ya le hice un sitio especial.", "happy");
@@ -206,10 +206,9 @@ export default function MemoriesPanel({ admin = false }: { admin?: boolean }) {
           {!data.memories.length && (
             <div className="empty-state">
               <Camera size={38} />
-              <h3>Hay momentos que merecen quedarse.</h3>
+              <h3>{admin ? "Mi primer recuerdo con Janny" : "¿Guardamos algo nuestro aquí?"}</h3>
               <p>
-                Una foto, una frase, aquel día. El primero puede ser muy
-                pequeñito.
+                {admin ? "Añadir una foto, un audio o unas palabras para Janny." : "Una foto, algo que dijimos o un día que te gustó. Yo también quiero acordarme contigo."}
               </p>
             </div>
           )}
@@ -222,7 +221,7 @@ export default function MemoriesPanel({ admin = false }: { admin?: boolean }) {
                     <PrivateMedia path={m.attachment} alt={m.title} />
                   ) : (
                     <div className="memory-note-art">
-                      ♡<span>un pedacito de vida</span>
+                      ♡<span>para acordarnos</span>
                     </div>
                   )}
                   <button
