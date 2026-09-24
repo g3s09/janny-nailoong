@@ -9,7 +9,15 @@ import {
   type ReactNode,
 } from "react";
 import { browserDb } from "./supabase/client";
-import { loadSnapshot, friendlyError } from "./data";
+import {
+  loadSnapshot,
+  friendlyError,
+  snapshotTables,
+  type SnapshotTable,
+} from "./data";
+import { useCharacter } from "./world/use-character";
+import { usePreferences } from "./world/use-preferences";
+import { useConversation } from "./world/use-conversation";
 import {
   emptySnapshot,
   type Snapshot,
@@ -19,16 +27,6 @@ import {
   type Panel,
 } from "./types";
 import { foods, shop, today } from "./constants";
-import { playSound, setAmbience } from "./sound";
-const defaultPrefs: Preferences = {
-  music: false,
-  effects: false,
-  haptics: true,
-  night: null,
-  room: "home",
-  accessory: "",
-  notifications: true,
-};
 type World = {
   profile: Profile;
   preview: boolean;
@@ -40,13 +38,15 @@ type World = {
   toast: string;
   error: string;
   loading: boolean;
+  dataReady: boolean;
   moodDraft: number | null;
   setMoodDraft: (m: number | null) => void;
   setPanel: (p: Panel) => void;
   setCharacter: (s: CharacterState) => void;
   say: (s: string, c?: CharacterState) => void;
   notify: (s: string) => void;
-  refresh: () => Promise<void>;
+  refresh: (tables?: SnapshotTable[]) => Promise<boolean>;
+  conversation: ReturnType<typeof useConversation>;
   updatePrefs: (p: Partial<Preferences>) => void;
   sound: (kind?: "tap" | "letter" | "food" | "unlock") => void;
   purchase: (id: string) => Promise<void>;
@@ -67,70 +67,67 @@ export function WorldProvider({
 }) {
   const [moodDraft, setMoodDraft] = useState<number | null>(null);
   const [data, setData] = useState<Snapshot>(emptySnapshot);
-  const [prefs, setPrefs] = useState(defaultPrefs);
   const [panel, setPanel] = useState<Panel>(null);
-  const [character, setCharacter] = useState<CharacterState>("idle");
-  const [speech, setSpeech] = useState(
-    "Te guardé el lugar más bonito. Bueno… y una galleta. Casi.",
+  const { character, speech, toast, setCharacter, notify, say } =
+    useCharacter();
+  const { prefs, prefsRef, updatePrefs, sound } = usePreferences(
+    profile.id,
+    ephemeral,
+    notify,
   );
-  const [toast, setToast] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const knownMessages = useRef<Set<string> | null>(null);
-  const prefsRef = useRef(prefs);
-  useEffect(() => {
-    prefsRef.current = prefs;
-  }, [prefs]);
-  const notify = useCallback((text: string) => setToast(text), []);
-  const sound = useCallback(
-    (kind: "tap" | "letter" | "food" | "unlock" = "tap") => {
-      if (prefsRef.current.effects) playSound(kind);
-      if (prefsRef.current.haptics && typeof navigator.vibrate === "function")
-        navigator.vibrate(kind === "letter" ? [20, 40, 20] : 12);
-    },
-    [],
-  );
-  const say = useCallback((text: string, state: CharacterState = "happy") => {
-    setSpeech(text);
-    setCharacter(state);
-  }, []);
-  const refresh = useCallback(async () => {
-    if (preview) return;
-    try {
-      const { error: deliveryError } =
-        await browserDb().rpc("deliver_messages");
-      if (deliveryError) throw new Error(deliveryError.message);
-      const next = await loadSnapshot();
-      const incoming = next.messages.filter(
-        (m) => m.recipient_id === profile.id && m.read_at === null,
+  const [dataReady, setDataReady] = useState(false);
+  const versions = useRef(new Map<string, number>());
+  const incoming = useCallback(() => {
+    if (!prefsRef.current.notifications) return;
+    notify("💌 Hay una carta nueva.");
+    say("¡Llegó una carta! La cuidé para ti.", "look-left");
+    sound("letter");
+  }, [prefsRef, notify, say, sound]);
+  const conversation = useConversation(profile.id, preview, incoming);
+  const refreshMessages = conversation.refresh;
+  const refresh = useCallback(
+    async (tables?: SnapshotTable[]) => {
+      if (preview) return true;
+      const selected = tables ?? [...snapshotTables];
+      const requestVersions = new Map(
+        selected.map((table) => {
+          const version = (versions.current.get(table) ?? 0) + 1;
+          versions.current.set(table, version);
+          return [table, version] as const;
+        }),
       );
-      if (
-        knownMessages.current &&
-        incoming.some((m) => !knownMessages.current!.has(m.id)) &&
-        prefsRef.current.notifications
-      ) {
-        notify("💌 Hay una carta nueva.");
-        say("¡Llegó una carta! La cuidé para ti.", "look-left");
-        sound("letter");
+      try {
+        const [next, messagesOk] = await Promise.all([
+          loadSnapshot(selected),
+          tables ? Promise.resolve(true) : refreshMessages(),
+        ]);
+        setData((current) => {
+          const patch: Partial<Snapshot> = {};
+          selected.forEach((table) => {
+            const field = table === "coins" ? "balance" : table;
+            if (versions.current.get(table) === requestVersions.get(table))
+              Object.assign(patch, { [field]: next[field] });
+          });
+          return { ...current, ...patch };
+        });
+        setError("");
+        if (!tables) setDataReady(true);
+        return messagesOk;
+      } catch (e) {
+        setError(friendlyError(e));
+        return false;
+      } finally {
+        if (!tables) setLoading(false);
       }
-      knownMessages.current = new Set(next.messages.map((m) => m.id));
-      setData(next);
-      setError("");
-    } catch (e) {
-      setError(friendlyError(e));
-    } finally {
-      setLoading(false);
-    }
-  }, [preview, profile.id, notify, say, sound]);
+    },
+    [preview, refreshMessages],
+  );
   useEffect(() => {
     let active = true;
     async function initialize() {
       try {
-        const raw = ephemeral
-          ? null
-          : localStorage.getItem(`janny-prefs:${profile.id}`);
-        if (raw)
-          setPrefs({ ...defaultPrefs, ...JSON.parse(raw), music: false });
         if (preview) {
           const stored = ephemeral
             ? null
@@ -147,6 +144,7 @@ export function WorldProvider({
           }
           if (active) {
             setData(next);
+            setDataReady(true);
             setLoading(false);
           }
         } else {
@@ -164,7 +162,6 @@ export function WorldProvider({
     void initialize();
     return () => {
       active = false;
-      setAmbience(false);
     };
   }, [preview, profile, refresh, ephemeral]);
   useEffect(() => {
@@ -181,51 +178,30 @@ export function WorldProvider({
   useEffect(() => {
     if (preview) return;
     const db = browserDb();
-    const channel = db
-      .channel(`world:${profile.id}`)
-      .on("postgres_changes", { event: "*", schema: "public" }, () => {
-        void refresh();
-      })
-      .subscribe();
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") void refresh();
-    }, 30000);
-    const onVisible = () => {
-      if (document.visibilityState === "visible") void refresh();
+    let channel = db.channel(`world:${profile.id}`);
+    for (const table of snapshotTables) {
+      channel = channel.on(
+        "postgres_changes",
+        { event: "*", schema: "public", table },
+        () => {
+          void refresh([table]);
+        },
+      );
+    }
+    channel.subscribe();
+    // Scheduled letters have no database update when their availability time arrives.
+    const sync = () => {
+      if (document.visibilityState === "visible")
+        void refresh(["open_when", "notifications"]);
     };
-    document.addEventListener("visibilitychange", onVisible);
+    const timer = setInterval(sync, 60000);
+    document.addEventListener("visibilitychange", sync);
     return () => {
       void db.removeChannel(channel);
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", sync);
     };
   }, [preview, profile.id, refresh]);
-  useEffect(() => {
-    if (!toast) return;
-    const timer = setTimeout(() => setToast(""), 5000);
-    return () => clearTimeout(timer);
-  }, [toast]);
-  useEffect(() => {
-    if (character === "idle" || character === "sleepy") return;
-    const timer = setTimeout(() => setCharacter("idle"), 3000);
-    return () => clearTimeout(timer);
-  }, [character]);
-  const updatePrefs = useCallback(
-    (patch: Partial<Preferences>) => {
-      setPrefs((current) => {
-        const next = { ...current, ...patch };
-        try {
-          localStorage.setItem(
-            `janny-prefs:${profile.id}`,
-            JSON.stringify(next),
-          );
-        } catch {}
-        return next;
-      });
-      if (patch.music !== undefined) setAmbience(patch.music);
-    },
-    [profile.id],
-  );
   const reward = useCallback(
     async (activity: string, reference?: string) => {
       if (preview) {
@@ -253,7 +229,7 @@ export function WorldProvider({
           reference_id: reference ?? null,
         });
         if (error) throw new Error(error.message);
-        await refresh();
+        await refresh(["coins", "unlocks"]);
       }
     },
     [preview, profile.id, refresh],
@@ -285,7 +261,7 @@ export function WorldProvider({
       } else {
         const { error } = await browserDb().rpc("purchase", { item_name: id });
         if (error) throw new Error(error.message);
-        await refresh();
+        await refresh(["coins", "unlocks"]);
       }
       sound("unlock");
       notify(`${item.name} ya está aquí.`);
@@ -297,14 +273,16 @@ export function WorldProvider({
       value={{
         profile,
         preview,
-        data,
+        data: { ...data, messages: conversation.messages },
+        conversation,
         prefs,
         panel,
         character,
         speech,
         toast,
-        error,
+        error: error || conversation.error,
         loading,
+        dataReady,
         moodDraft,
         setMoodDraft,
         setPanel,

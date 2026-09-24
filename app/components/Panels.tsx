@@ -34,7 +34,7 @@ const subtitles = {
   letter: "Antes de empezar, hay unas palabras esperando por ti.",
 };
 export default function Panels({ onRepeat }: { onRepeat: () => void }) {
-  const { panel, setPanel } = useWorld();
+  const { panel, setPanel, loading, dataReady, error, refresh } = useWorld();
   return (
     <AnimatePresence mode="wait">
       {panel && (
@@ -45,7 +45,18 @@ export default function Panels({ onRepeat }: { onRepeat: () => void }) {
           subtitle={subtitles[panel]}
           onClose={() => setPanel(null)}
         >
-          {panel === "mail" ? (
+          {(!dataReady || loading) &&
+          panel !== "letter" &&
+          panel !== "settings" ? (
+            <div role="status">
+              <p>{error || "Abriendo tus recuerdos…"}</p>
+              {error && (
+                <button className="secondary" onClick={() => void refresh()}>
+                  Reintentar
+                </button>
+              )}
+            </div>
+          ) : panel === "mail" ? (
             <MailPanel />
           ) : panel === "diary" ? (
             <DiaryPanel />

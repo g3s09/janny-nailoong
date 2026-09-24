@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const db = await serverDb();
   if (db && code) {
     const { error } = await db.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(new URL("/", url.origin));
+    if (!error) return NextResponse.redirect(new URL("/password", url.origin));
   }
   return NextResponse.redirect(new URL("/login?expired=1", url.origin));
 }

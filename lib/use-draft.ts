@@ -1,59 +1,122 @@
 "use client";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type SetStateAction,
+} from "react";
 
 export const PreviewDrafts = createContext<Map<string, string> | null>(null);
+const MAX_AGE = 30 * 86400000;
+type Status = "loading" | "empty" | "saved" | "unavailable";
 
-// Per-profile, device-local drafts. Never shared with the other account.
-export function useDraft(key: string, initial: string, enabled = true) {
-  const [value, setValue] = useState(initial);
-  const [ready, setReady] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const fallback = useRef(initial);
+export function useSavedDraft<T>(
+  key: string,
+  initial: T,
+  enabled: boolean,
+  decode: (value: unknown) => T,
+) {
   const temporary = useContext(PreviewDrafts);
+  const [snapshot, setSnapshot] = useState({
+    key: "",
+    value: initial,
+    status: "loading" as Status,
+  });
+  const current = useRef(initial);
+  const options = useRef({ initial, decode });
+  const lastRecord = useRef<string | null>(null);
+  const storageKey = `janny-draft:${key}`;
   useEffect(() => {
-    let active = true;
+    let live = true;
     queueMicrotask(() => {
-      if (!active) return;
+      if (!live) return;
+      let value = options.current.initial;
+      let status: Status = "empty";
       try {
         const stored = enabled
-          ? localStorage.getItem(`janny-draft:${key}`)
-          : (temporary?.get(key) ?? null);
-        const draft = stored ? JSON.parse(stored) : null;
-        if (
-          draft &&
-          typeof draft.value === "string" &&
-          typeof draft.time === "number" &&
-          Date.now() - draft.time < 30 * 86400000
-        ) {
-          setValue(draft.value);
-          setSaved(true);
-        } else setValue(fallback.current);
+          ? localStorage.getItem(storageKey)
+          : temporary?.get(storageKey);
+        lastRecord.current = stored ?? null;
+        if (stored) {
+          const record = JSON.parse(stored);
+          const age = Date.now() - record.time;
+          if (typeof record.time === "number" && age >= 0 && age < MAX_AGE) {
+            value = options.current.decode(record.value);
+            status = "saved";
+          } else {
+            if (enabled) localStorage.removeItem(storageKey);
+            else temporary?.delete(storageKey);
+            lastRecord.current = null;
+          }
+        }
       } catch {
-        /* Storage is optional; writing remains available. */
+        status = "unavailable";
       }
-      setReady(true);
+      current.current = value;
+      setSnapshot({ key, value, status });
     });
     return () => {
-      active = false;
+      live = false;
     };
-  }, [key, enabled, temporary]);
-  function update(next: string) {
-    setValue(next);
+  }, [key, storageKey, enabled, temporary]);
+  function setValue(action: SetStateAction<T>) {
+    const value =
+      typeof action === "function"
+        ? (action as (value: T) => T)(current.current)
+        : action;
+    current.current = value;
+    let status: Status = "saved";
     try {
-      const stored = JSON.stringify({ value: next, time: Date.now() });
-      if (enabled) localStorage.setItem(`janny-draft:${key}`, stored);
-      else temporary?.set(key, stored);
-      setSaved(true);
+      const record = JSON.stringify({ value, time: Date.now() });
+      const latest = enabled
+        ? localStorage.getItem(storageKey)
+        : (temporary?.get(storageKey) ?? null);
+      if (latest !== lastRecord.current)
+        throw new Error("A newer draft exists in another view");
+      if (enabled) localStorage.setItem(storageKey, record);
+      else if (temporary) temporary.set(storageKey, record);
+      else status = "unavailable";
+      lastRecord.current = record;
     } catch {
-      setSaved(false);
+      status = "unavailable";
     }
+    setSnapshot({ key, value, status });
   }
-  function clear() {
+  function clear(value: T = current.current) {
+    let status: Status = "empty";
     try {
-      if (enabled) localStorage.removeItem(`janny-draft:${key}`);
-      else temporary?.delete(key);
-    } catch {}
-    setSaved(false);
+      const latest = enabled
+        ? localStorage.getItem(storageKey)
+        : (temporary?.get(storageKey) ?? null);
+      // A completed request must not erase a newer draft opened in another tab.
+      if (latest === lastRecord.current) {
+        if (enabled) localStorage.removeItem(storageKey);
+        else temporary?.delete(storageKey);
+        lastRecord.current = null;
+      }
+    } catch {
+      status = "unavailable";
+    }
+    current.current = value;
+    setSnapshot({ key, value, status });
   }
-  return { value, setValue: update, ready, saved, clear };
+  const ready = snapshot.key === key;
+  return {
+    value: ready ? snapshot.value : initial,
+    setValue,
+    clear,
+    ready,
+    saved: ready && snapshot.status === "saved",
+    status: ready ? snapshot.status : ("loading" as Status),
+  };
+}
+
+const decodeText = (value: unknown) => {
+  if (typeof value !== "string") throw new Error("Invalid text draft");
+  return value;
+};
+export function useDraft(key: string, initial: string, enabled = true) {
+  return useSavedDraft(key, initial, enabled, decodeText);
 }

@@ -42,6 +42,7 @@ export default function HomeScene({
     loading,
     error,
     refresh,
+    conversation,
   } = useWorld();
   const [hour, setHour] = useState(12);
   useEffect(() => {
@@ -54,13 +55,7 @@ export default function HomeScene({
     };
   }, []);
   const night = prefs.night ?? (hour >= 19 || hour < 7);
-  const unread = data.messages.filter(
-    (m) =>
-      m.recipient_id !== m.sender_id &&
-      m.sender_id !== "local-preview" &&
-      !m.read_at &&
-      data.profiles.find((p) => p.id === m.sender_id)?.role === "gela",
-  ).length;
+  const unread = conversation.unreadCount;
   const currentMood = data.moods.find((m) => m.day === today());
   const special = data.events.find(
     (e) =>

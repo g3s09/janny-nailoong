@@ -1,4 +1,5 @@
 "use client";
+import { sectionMotion } from "@/lib/motion";
 import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -15,7 +16,8 @@ import { clearDeviceSession } from "@/lib/device-session";
 function Panel() {
   const reduced = useReducedMotion();
   const router = useRouter();
-  const { data, error, refresh, toast, notify, profile } = useWorld();
+  const { data, error, refresh, toast, notify, profile, loading, dataReady } =
+    useWorld();
   const [tab, setTab] = useState("mail");
   const tabs = [
     { id: "mail", name: "Buzón" },
@@ -78,16 +80,11 @@ function Panel() {
           className="admin-paper"
           data-section={tab}
           key={tab}
-          initial={{
-            opacity: 0,
-            y: reduced ? 0 : tab === "mail" ? 28 : 16,
-            rotate: reduced ? 0 : tab === "memories" ? -1 : 0,
-          }}
-          animate={{ opacity: 1, y: 0, rotate: 0 }}
-          exit={{ opacity: 0, y: reduced ? 0 : -8 }}
-          transition={{ duration: reduced ? 0 : 0.22 }}
+          {...sectionMotion(tab, reduced)}
         >
-          {tab === "mail" ? (
+          {loading || !dataReady ? (
+            <p role="status">Abriendo tu panel…</p>
+          ) : tab === "mail" ? (
             <MailPanel admin />
           ) : tab === "memories" ? (
             <MemoriesPanel admin />
@@ -103,6 +100,9 @@ function Panel() {
         <summary>Avisos de nuevas cartas</summary>
         <PushSettings />
       </details>
+      <Link className="text-button" href="/password">
+        Cambiar mi contraseña
+      </Link>
       <p className="privacy-note">
         El diario y los estados de ánimo de Janny permanecen privados.
       </p>

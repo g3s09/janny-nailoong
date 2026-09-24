@@ -1,34 +1,39 @@
+import { validateFile } from "./validation";
 import { browserDb } from "./supabase/client";
-import { emptySnapshot, type Snapshot, type Profile } from "./types";
-export async function loadSnapshot(): Promise<Snapshot> {
+import { type Snapshot, type Profile } from "./types";
+export const snapshotTables = [
+  "profiles",
+  "memories",
+  "moods",
+  "open_when",
+  "events",
+  "unlocks",
+  "visits",
+  "notifications",
+  "phrases",
+  "coins",
+] as const;
+export type SnapshotTable = (typeof snapshotTables)[number];
+export async function loadSnapshot(
+  tables: readonly SnapshotTable[] = snapshotTables,
+): Promise<Partial<Snapshot>> {
   const db = browserDb();
-  const tables = [
-    "profiles",
-    "messages",
-    "memories",
-    "moods",
-    "open_when",
-    "events",
-    "unlocks",
-    "visits",
-    "notifications",
-    "phrases",
-  ] as const;
   const results = await Promise.all(
-    tables.map((table) => db.from(table).select("*")),
+    tables.map((table) =>
+      db.from(table).select(table === "coins" ? "amount" : "*"),
+    ),
   );
   const failure = results.find((result) => result.error);
   if (failure?.error) throw new Error(failure.error.message);
-  const snapshot = { ...emptySnapshot };
-  tables.forEach((table, index) =>
-    Object.assign(snapshot, { [table]: results[index].data ?? [] }),
-  );
-  const coins = await db.from("coins").select("amount");
-  if (coins.error) throw new Error(coins.error.message);
-  snapshot.balance = (coins.data ?? []).reduce(
-    (sum: number, row: { amount: number }) => sum + row.amount,
-    0,
-  );
+  const snapshot: Partial<Snapshot> = {};
+  tables.forEach((table, index) => {
+    if (table === "coins")
+      snapshot.balance = (results[index].data ?? []).reduce(
+        (sum: number, row: { amount: number }) => sum + Number(row.amount),
+        0,
+      );
+    else Object.assign(snapshot, { [table]: results[index].data ?? [] });
+  });
   return snapshot;
 }
 export async function getProfile(): Promise<Profile | null> {
@@ -46,23 +51,7 @@ export async function getProfile(): Promise<Profile | null> {
   return data as Profile | null;
 }
 export async function uploadFile(file: File, owner: string) {
-  if (file.size > 15 * 1024 * 1024)
-    throw new Error("El archivo debe pesar menos de 15 MB.");
-  const allowed = [
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "image/gif",
-    "audio/mpeg",
-    "audio/mp4",
-    "audio/ogg",
-    "audio/webm",
-    "audio/wav",
-  ];
-  if (!allowed.includes(file.type))
-    throw new Error(
-      "Elige una imagen JPG, PNG, WebP o GIF, o un archivo de audio compatible.",
-    );
+  validateFile(file);
   const ext = file.type.split("/")[1].replace("mpeg", "mp3");
   const path = `${owner}/${crypto.randomUUID()}.${ext}`;
   const { error } = await browserDb()
@@ -82,6 +71,16 @@ export async function removeFile(path: string) {
   await browserDb().storage.from("keepsakes").remove([path]);
 }
 export function friendlyError(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    if (/failed to fetch|network|fetch failed/i.test(error.message))
+      return "No pudimos conectar. Tus cambios siguen aquí; inténtalo cuando vuelva la conexión.";
+    return error.message;
+  }
   return error instanceof Error
     ? error.message
     : "No se pudo guardar. Inténtalo de nuevo; tu texto sigue aquí.";

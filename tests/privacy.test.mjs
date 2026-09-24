@@ -275,4 +275,130 @@ test("Private world: real PostgreSQL policies, delivery, files and economy", asy
       );
     },
   );
+  await t.test(
+    "Retrying a send returns the same letter and direct inserts are blocked",
+    async () => {
+      await db.exec("reset role");
+      await db.exec(
+        await readFile(
+          new URL(
+            "../supabase/migrations/003_reliable_messages.sql",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      );
+      const request = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+      await db.exec(
+        await readFile(
+          new URL(
+            "../supabase/migrations/005_close_legacy_message_writes.sql",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      );
+      await asUser(gela);
+      const before = await count("messages");
+      const first = (
+        await db.query(
+          `select * from public.send_private_message('${request}','${janny}','Exactly once')`,
+        )
+      ).rows[0];
+      const retry = (
+        await db.query(
+          `select * from public.send_private_message('${request}','${janny}','A retried request')`,
+        )
+      ).rows[0];
+      assert.equal(first.id, retry.id);
+      assert.equal(retry.body, "Exactly once");
+      assert.equal(await count("messages"), before + 1);
+      await assert.rejects(
+        db.exec(
+          `insert into public.messages(sender_id,recipient_id,body) values('${gela}','${janny}','Bypass')`,
+        ),
+      );
+      await asUser(outsider);
+      await assert.rejects(
+        db.exec(
+          `select public.send_private_message(gen_random_uuid(),'${janny}','Intrusion')`,
+        ),
+      );
+      await asUser(janny);
+      await assert.rejects(
+        db.exec(
+          `select public.send_private_message(gen_random_uuid(),'${gela}','Future',null,null,false,now()+interval '1 day')`,
+        ),
+      );
+      await assert.rejects(
+        db.exec(
+          `select public.send_private_message(gen_random_uuid(),'${gela}','Stolen file','${gela}/private.png','image/png')`,
+        ),
+      );
+      await assert.rejects(
+        db.exec(
+          `select public.send_private_message(gen_random_uuid(),'${gela}','')`,
+        ),
+      );
+      await db.exec(
+        `select public.send_private_message('${request}','${gela}','The other sender has their own key')`,
+      );
+    },
+  );
+  await t.test(
+    "Enabling push preserves previously scheduled letters; read jobs are removed",
+    async () => {
+      await db.exec("reset role");
+      await db.exec(
+        await readFile(
+          new URL(
+            "../supabase/migrations/004_push_retries.sql",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      );
+      await asUser(gela);
+      const letter = (
+        await db.query(
+          `select * from public.send_private_message(gen_random_uuid(),'${janny}','Scheduled before subscription',null,null,false,now()+interval '1 day')`,
+        )
+      ).rows[0];
+      await asUser(janny);
+      await db.exec(
+        `insert into public.push_subscriptions(endpoint,owner_id,p256dh,auth) values('https://fcm.googleapis.com/later','${janny}','key','auth')`,
+      );
+      await db.exec("reset role; set role service_role");
+      assert.equal(
+        (
+          await db.query(
+            `select * from public.push_jobs where message_id='${letter.id}'`,
+          )
+        ).rows.length,
+        1,
+      );
+      assert.equal(
+        (await db.query("select * from public.claim_push_jobs()")).rows.length,
+        0,
+      );
+      await db.exec(
+        `reset role; update public.messages set deliver_at=now()-interval '1 minute' where id='${letter.id}'; update public.push_jobs set available_at=now()-interval '1 minute' where message_id='${letter.id}'; set role service_role`,
+      );
+      const claimed = (await db.query("select * from public.claim_push_jobs()"))
+        .rows;
+      assert.equal(claimed.length, 1);
+      await asUser(janny);
+      await db.exec(`select public.mark_message_read('${letter.id}')`);
+      await db.exec("reset role; set role service_role");
+      await db.query("select * from public.claim_push_jobs()");
+      assert.equal(
+        (
+          await db.query(
+            `select * from public.push_jobs where message_id='${letter.id}'`,
+          )
+        ).rows.length,
+        0,
+      );
+    },
+  );
 });

@@ -6,7 +6,7 @@ export default function Login() {
         <span className="brand-sun">✳</span>
         <p className="eyebrow">EL RINCÓN DE JANNY</p>
         <h1>Tu lugar sigue aquí.</h1>
-        <p>Una llave pequeñita para un lugar solo tuyo.</p>
+        <p>Tu correo, tu contraseña y un ratito para ti.</p>
         <LoginForm />
         <p className="handwritten">Hay alguien esperando saludarte.</p>
       </div>

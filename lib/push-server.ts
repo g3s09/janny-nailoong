@@ -83,11 +83,12 @@ export async function dispatchPush(sender?: string) {
         }),
         { TTL: 3600, timeout: 8000 },
       );
-      await db
+      const { error: completedError } = await db
         .from("push_jobs")
         .delete()
         .eq("id", job.id)
         .eq("claim_token", job.claim_token);
+      if (completedError) throw completedError;
       delivered++;
     } catch (e) {
       const status = (e as { statusCode?: number }).statusCode;
@@ -96,16 +97,29 @@ export async function dispatchPush(sender?: string) {
           .from("push_subscriptions")
           .delete()
           .eq("endpoint", job.endpoint);
-      else
+      else {
+        const headers = (e as { headers?: Record<string, string> }).headers;
+        const retryHeader = headers?.["retry-after"];
+        const requestedDelay = retryHeader
+          ? /^\d+$/.test(retryHeader)
+            ? Number(retryHeader) * 1000
+            : Date.parse(retryHeader) - Date.now()
+          : 0;
+        const backoff = Math.min(
+          3600000,
+          Math.max(
+            Number.isFinite(requestedDelay) ? requestedDelay : 0,
+            30000 * 2 ** Math.min(job.attempts, 5),
+          ),
+        );
         await db
           .from("push_jobs")
           .update({
-            available_at: new Date(
-              Date.now() + 60000 * Math.min(job.attempts, 5),
-            ).toISOString(),
+            available_at: new Date(Date.now() + backoff).toISOString(),
           })
           .eq("id", job.id)
           .eq("claim_token", job.claim_token);
+      }
     }
   }
   return delivered;

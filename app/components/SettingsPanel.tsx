@@ -5,6 +5,7 @@ import { browserDb } from "@/lib/supabase/client";
 import type { Preferences } from "@/lib/types";
 import PushSettings from "./PushSettings";
 import { clearDeviceSession } from "@/lib/device-session";
+import Link from "next/link";
 export default function SettingsPanel({ onRepeat }: { onRepeat: () => void }) {
   const router = useRouter();
   const { prefs, updatePrefs, preview, setPanel, notify, profile } = useWorld();
@@ -71,6 +72,11 @@ export default function SettingsPanel({ onRepeat }: { onRepeat: () => void }) {
         </p>
       </div>
       <PushSettings />
+      {!preview && (
+        <Link href="/password" className="text-button">
+          Cambiar mi contraseña
+        </Link>
+      )}
       {!preview && (
         <button
           className="text-button"

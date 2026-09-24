@@ -1,4 +1,5 @@
 "use client";
+import { sectionMotion } from "@/lib/motion";
 import { useEffect, useRef, useId, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { motion, useIsPresent, useReducedMotion } from "motion/react";
@@ -37,19 +38,7 @@ export default function Dialog({
       className="paper-dialog"
       data-section={kind}
       data-exiting={!present || undefined}
-      initial={{
-        opacity: 0,
-        y: reduced ? 0 : kind === "mail" ? 44 : 24,
-        scale: reduced ? 1 : kind === "box" ? 0.9 : 0.98,
-        rotate: reduced ? 0 : kind === "memories" ? -2 : 0,
-        rotateY: reduced ? 0 : kind === "diary" ? -12 : 0,
-      }}
-      animate={{ opacity: 1, y: 0, scale: 1, rotate: 0, rotateY: 0 }}
-      exit={{ opacity: 0, y: reduced ? 0 : 12, scale: reduced ? 1 : 0.99 }}
-      transition={{
-        duration: reduced ? 0 : present ? 0.42 : 0.2,
-        ease: [0.22, 1, 0.36, 1],
-      }}
+      {...sectionMotion(kind, reduced)}
       aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault();
