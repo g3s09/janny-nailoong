@@ -16,6 +16,7 @@ import { uploadFile, friendlyError } from "@/lib/data";
 import { prettyDate } from "@/lib/constants";
 import PrivateMedia from "./PrivateMedia";
 import WritingPrompts from "./WritingPrompts";
+import PushSettings from "./PushSettings";
 export default function MailPanel({ admin = false }: { admin?: boolean }) {
   const { data, profile, preview, sound, notify, say, conversation } =
     useWorld();
@@ -62,7 +63,8 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     const pendingReads = new Set<string>();
     const visible = new Set<string>();
     async function mark(id: string) {
-      if (document.visibilityState !== "visible" || pendingReads.has(id)) return;
+      if (document.visibilityState !== "visible" || pendingReads.has(id))
+        return;
       pendingReads.add(id);
       try {
         await markRead([id]);
@@ -72,16 +74,21 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
         pendingReads.delete(id);
       }
     }
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        const id = (entry.target as HTMLElement).dataset.messageId!;
-        if (entry.isIntersecting) {
-          visible.add(id);
-          void mark(id);
-        } else visible.delete(id);
-      });
-    }, { threshold: 0.1 });
-    conversationRoot.current?.querySelectorAll<HTMLElement>("[data-unread=true]").forEach((node) => observer.observe(node));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const id = (entry.target as HTMLElement).dataset.messageId!;
+          if (entry.isIntersecting) {
+            visible.add(id);
+            void mark(id);
+          } else visible.delete(id);
+        });
+      },
+      { threshold: 0.1 },
+    );
+    conversationRoot.current
+      ?.querySelectorAll<HTMLElement>("[data-unread=true]")
+      .forEach((node) => observer.observe(node));
     const onVisible = () => visible.forEach((id) => void mark(id));
     document.addEventListener("visibilitychange", onVisible);
     return () => {
@@ -181,17 +188,25 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
   }
   return (
     <div className="mail-panel">
+      {!preview && (
+        <details className="mail-notifications">
+          <summary>Avisarme cuando llegue un mensaje</summary>
+          <PushSettings />
+        </details>
+      )}
       <div className="conversation-heading">
         <div>
-          <strong>
-            {recipient?.name || (admin ? "Janny" : "Gela")}
-          </strong>
+          <strong>{recipient?.name || (admin ? "Janny" : "Gela")}</strong>
         </div>
         <button type="button" className="text-button" onClick={scrollToLatest}>
           Ver lo más reciente ↓
         </button>
       </div>
-      <div ref={conversationRoot} className="letter-history" aria-label="Historial de cartas">
+      <div
+        ref={conversationRoot}
+        className="letter-history"
+        aria-label="Historial de cartas"
+      >
         {conversation.hasOlder && (
           <button
             type="button"
@@ -273,7 +288,9 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
           disabled={busy || !draft.ready || Boolean(pending)}
         >
           <label htmlFor="letter-body">
-            {admin ? "Mi mensaje para Janny" : "Escríbeme lo que quieras, Janny"}
+            {admin
+              ? "Mi mensaje para Janny"
+              : "Escríbeme lo que quieras, Janny"}
           </label>
           {!text && (
             <WritingPrompts

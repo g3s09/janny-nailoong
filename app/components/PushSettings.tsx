@@ -1,11 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useWorld } from "@/lib/world-store";
+import { useSubmitLock } from "@/lib/use-submit-lock";
 export default function PushSettings() {
   const { preview } = useWorld();
   const [state, setState] = useState("Comprobando disponibilidad…");
   const [key, setKey] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const { busy, acquire, release } = useSubmitLock();
+  const [enabled, setEnabled] = useState(false);
   useEffect(() => {
     let live = true;
     async function check() {
@@ -16,7 +18,11 @@ export default function PushSettings() {
           );
         return;
       }
-      if (!("PushManager" in window) || !("serviceWorker" in navigator)) {
+      if (
+        !("PushManager" in window) ||
+        !("serviceWorker" in navigator) ||
+        !("Notification" in window)
+      ) {
         if (live)
           setState(
             "En iPhone, instala primero el rincón desde Safari. Si tu navegador no admite avisos, puedes seguir usando el buzón.",
@@ -25,6 +31,7 @@ export default function PushSettings() {
       }
       try {
         const response = await fetch("/api/push");
+        if (!response.ok) throw new Error();
         const config = await response.json();
         if (live) {
           setKey(config.ready ? config.publicKey : null);
@@ -34,6 +41,27 @@ export default function PushSettings() {
               : "Los avisos fuera de la app todavía no están disponibles.",
           );
         }
+        if (config.ready && Notification.permission === "granted") {
+          const registration = await navigator.serviceWorker.getRegistration();
+          const subscription =
+            await registration?.pushManager.getSubscription();
+          if (subscription) {
+            const saved = await fetch("/api/push", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(subscription),
+            });
+            if (!saved.ok) throw new Error();
+            if (live) {
+              setEnabled(true);
+              setState("Recibirás avisos de mensajes en este dispositivo.");
+            }
+          }
+        }
+        if (config.ready && Notification.permission === "denied" && live)
+          setState(
+            "Los avisos están bloqueados. Permítelos en los ajustes del navegador para este sitio.",
+          );
       } catch {
         if (live)
           setState(
@@ -47,8 +75,7 @@ export default function PushSettings() {
     };
   }, [preview]);
   async function enable() {
-    if (!key) return;
-    setBusy(true);
+    if (!key || !acquire()) return;
     try {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
@@ -73,31 +100,38 @@ export default function PushSettings() {
         body: JSON.stringify(subscription),
       });
       if (!response.ok) throw new Error();
-      setState(
-        "Listo, los avisos están activados en este dispositivo.",
-      );
+      setEnabled(true);
+      setState("Listo, los avisos están activados en este dispositivo.");
     } catch {
       setState(
         "No se pudieron activar los avisos. Puedes volver a intentarlo.",
       );
     } finally {
-      setBusy(false);
+      release();
     }
   }
   async function disable() {
-    setBusy(true);
+    if (!acquire()) return;
     try {
-      const response = await fetch("/api/push", { method: "DELETE" });
-      if (!response.ok) throw new Error();
       const registration = await navigator.serviceWorker.getRegistration();
-      await (await registration?.pushManager.getSubscription())?.unsubscribe();
-      setState("Avisos desactivados para tu cuenta en todos sus dispositivos.");
+      const subscription = await registration?.pushManager.getSubscription();
+      if (subscription) {
+        const response = await fetch("/api/push", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: subscription.endpoint }),
+        });
+        if (!response.ok) throw new Error();
+        await subscription.unsubscribe();
+      }
+      setEnabled(false);
+      setState("Avisos desactivados en este dispositivo.");
     } catch {
       setState(
         "No pudimos desactivar los avisos. Inténtalo de nuevo con conexión.",
       );
     } finally {
-      setBusy(false);
+      release();
     }
   }
   return (
@@ -110,18 +144,18 @@ export default function PushSettings() {
           <button
             type="button"
             className="secondary"
-            disabled={busy}
+            disabled={busy || enabled}
             onClick={enable}
           >
-            Activar en este dispositivo
+            {enabled ? "Avisos activados" : "Activar en este dispositivo"}
           </button>
           <button
             type="button"
             className="text-button"
-            disabled={busy}
+            disabled={busy || !enabled}
             onClick={disable}
           >
-            Desactivar mis avisos
+            Desactivar en este dispositivo
           </button>
         </div>
       )}

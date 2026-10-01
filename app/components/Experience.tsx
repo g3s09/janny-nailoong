@@ -12,6 +12,17 @@ function ExperienceBody({ freshStart = false }: { freshStart?: boolean }) {
   const [name, setName] = useState("");
   const [intro, setIntro] = useState<boolean | null>(null);
   useEffect(() => {
+    if (intro !== false || preview) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("open") !== "mail") return;
+    const timer = setTimeout(() => {
+      setPanel("mail");
+      url.searchParams.delete("open");
+      window.history.replaceState(window.history.state, "", url);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [intro, preview, setPanel]);
+  useEffect(() => {
     const task = window.setTimeout(() => {
       try {
         const saved = freshStart

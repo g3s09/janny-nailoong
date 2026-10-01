@@ -1,4 +1,4 @@
-const CACHE = "janny-public-shell-v2";
+const CACHE = "janny-public-shell-v3";
 const SHELL = ["/offline.html","/nailoong/nailoong-idle.png","/icon.svg","/icons/icon-192.png","/icons/icon-512.png"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)));self.skipWaiting();});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith("janny-public-shell-")&&key!==CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});
@@ -10,14 +10,14 @@ self.addEventListener('push', event => {
     body: 'Tienes una carta nueva. Entra a tu rincón para leerla.',
     icon: '/icons/icon-192.png', badge: '/icons/icon-192.png',
     tag: typeof data.tag === 'string' ? data.tag : 'new-letter',
-    data: { url: '/' }
+    data: { url: '/?open=mail' }
   }));
 });
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async windows => {
     const existing = windows.find(client => new URL(client.url).origin === self.location.origin);
-    if (existing) { await existing.navigate('/'); return existing.focus(); }
-    return self.clients.openWindow('/');
+    if (existing) { await existing.navigate('/?open=mail'); return existing.focus(); }
+    return self.clients.openWindow('/?open=mail');
   }));
 });

@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import Nailoong from "./Nailoong";
+import NailoongDialogue from "./NailoongDialogue";
 import UnreadBadge from "./UnreadBadge";
 import RoomArt from "./RoomArt";
 import { useWorld } from "@/lib/world-store";
@@ -28,12 +29,11 @@ export default function HomeScene({
   name: string;
   onRepeat: () => void;
 }) {
-  useNarrative(name);
+  useNarrative();
   const {
     prefs,
     updatePrefs,
     setPanel,
-    speech,
     character,
     treat,
     sound,
@@ -95,7 +95,11 @@ export default function HomeScene({
           </span>
         </Link>
         <div className="header-actions">
-          <button className="icon-button mail-shortcut" aria-label="Abrir mensajes" onClick={() => open("mail")}>
+          <button
+            className="icon-button mail-shortcut"
+            aria-label="Abrir mensajes"
+            onClick={() => open("mail")}
+          >
             <Mail size={18} />
             <UnreadBadge count={unread} />
           </button>
@@ -130,7 +134,9 @@ export default function HomeScene({
                   : "Una noche tranquila"}
               , {name || "Janny"}.
             </h1>
-            <p>Tenía ganas de hacer algo bonito para ti. Ojalá te guste, Janny.</p>
+            <p>
+              Tenía ganas de hacer algo bonito para ti. Ojalá te guste, Janny.
+            </p>
           </div>
           <button
             className="time-switch"
@@ -182,9 +188,7 @@ export default function HomeScene({
             }[prefs.room] || "UN LUGAR CONTIGO"}
           </span>
           <div className="room-character">
-            <div className="speech" aria-live="polite">
-              {speech}
-            </div>
+            <NailoongDialogue name={name} />
             <Nailoong
               animation={character}
               treat={treat}
@@ -204,8 +208,7 @@ export default function HomeScene({
             className={`hotspot mail-spot ${unread ? "has-mail" : ""}`}
             onClick={() => open("mail")}
           >
-            Escríbeme{" "}
-            <UnreadBadge count={unread} />
+            Escríbeme <UnreadBadge count={unread} />
             <ArrowUpRight size={12} />
           </button>
           <button
@@ -244,7 +247,8 @@ export default function HomeScene({
             onClick={() => updatePrefs({ night: !night })}
           />
           <div className="room-instruction">
-            <Sparkles size={13} /> Te dejé varias cositas. Toca una y mira qué hay.
+            <Sparkles size={13} /> Te dejé varias cositas. Toca una y mira qué
+            hay.
           </div>
           {loading && (
             <span className="room-loading">Abriendo tus recuerdos…</span>

@@ -50,7 +50,7 @@ Los formularios bloquean envíos simultáneos y conservan su contenido al fallar
 
 ## Avisos con la aplicación cerrada
 
-El código de Web Push está implementado, pero necesita configuración del servidor antes de activarse. La interfaz indica su disponibilidad real y nunca pide permiso por sí sola.
+Web Push envía avisos al destinatario de cada mensaje nuevo, cuando este tiene una suscripción activa. La interfaz consulta su disponibilidad y solicita permiso solo al pulsar «Activar en este dispositivo». El buzón de ambas cuentas incluye ese control.
 
 1. Instalar `supabase/migrations/002_private_push.sql` una sola vez después de la 001.
 2. Generar claves VAPID con `npx web-push generate-vapid-keys` y guardarlas como secretos del servidor en Vercel: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT` (`mailto:` de contacto).
@@ -58,7 +58,7 @@ El código de Web Push está implementado, pero necesita configuración del serv
 4. Guardar el mismo secreto de envío en Supabase Vault, nombre `janny_push_dispatch_secret`. Ejecutar `supabase/push-scheduler.sql` para los envíos y reintentos cada minuto. El planificador no contiene el valor del secreto.
 5. Volver a desplegar y activar los avisos voluntariamente desde cada cuenta/dispositivo. En iOS se necesita la aplicación instalada en la pantalla de inicio.
 
-El aviso contiene solo un texto genérico, nunca nombres, cartas o adjuntos. La cola respeta `deliver_at`, omite cartas leídas y permite hasta cinco intentos durante 24 horas. La entrega depende del navegador, la conectividad y los permisos del dispositivo. Cerrar sesión elimina la suscripción del dispositivo actual; «Desactivar mis avisos» elimina las suscripciones de toda la cuenta.
+El aviso contiene solo un texto genérico, nunca nombres, cartas o adjuntos. La cola respeta `deliver_at`, omite cartas leídas y permite hasta cinco intentos durante 24 horas. La entrega depende del navegador, la conectividad y los permisos del dispositivo. Cerrar sesión elimina la suscripción del dispositivo actual; «Desactivar en este dispositivo» elimina únicamente la suscripción del navegador actual. Los demás dispositivos conservan sus avisos.
 
 ## Instalación y límites actuales
 
@@ -72,3 +72,9 @@ El manifiesto, los iconos y el service worker permiten instalar la web como PWA.
 ## Publicación
 
 El repositorio en GitHub despliega `main` en Vercel. Variables de producción: `NEXT_PUBLIC_SUPABASE_PROJECT_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; se conservan alias anteriores para compatibilidad. Comprobar siempre el resultado del despliegue después de publicar.
+
+## Mensajes ocasionales de Nailoong
+
+La pantalla de inicio muestra un globo diferenciado cada 60–100 segundos de disponibilidad, durante 12 segundos. Las frases se barajan sin repetir hasta agotar la lista. Se suspenden con una sección abierta, al cambiar de pestaña, mientras se escribe o al reaccionar Nailoong a otra acción. «Un ratito en silencio» los pausa hasta abandonar o recargar la vista. La vista de prueba utiliza el mismo componente. No escribe datos de progreso ni mensajes en Supabase.
+
+Configuración administrativa completada el 30 de septiembre de 2026: las tablas y funciones de las migraciones 002 y 004 se instalaron sin alterar los mensajes existentes; las cinco variables de Web Push se guardaron como secretos de producción en Vercel. El secreto del programador se guardó en Vault y los dos trabajos de supabase/push-scheduler.sql quedaron activos. Cada persona debe autorizar los avisos en su dispositivo; esto no puede concederse remotamente desde el servidor.
