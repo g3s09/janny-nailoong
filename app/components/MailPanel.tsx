@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSavedDraft } from "@/lib/use-draft";
 import { decodeMail, emptyMail } from "@/lib/draft-models";
 import {
@@ -20,7 +20,7 @@ import PushSettings from "./PushSettings";
 export default function MailPanel({ admin = false }: { admin?: boolean }) {
   const { data, profile, preview, sound, notify, say, conversation } =
     useWorld();
-  const { markRead } = conversation;
+  const { markRead, refresh: refreshConversation } = conversation;
   const draft = useSavedDraft(
     `${profile.id}:mail`,
     emptyMail,
@@ -33,15 +33,15 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     draft.setValue((v) => ({ ...v, important }));
   const setSchedule = (schedule: string) =>
     draft.setValue((v) => ({ ...v, schedule }));
-  const bottom = useRef<HTMLDivElement>(null);
   const conversationRoot = useRef<HTMLDivElement>(null);
-  const scrollToLatest = () =>
-    bottom.current?.scrollIntoView({
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-        ? "instant"
-        : "smooth",
-      block: "nearest",
-    });
+  const followLatest = useRef(true);
+  const historyAnchor = useRef<{ id: string; top: number } | null>(null);
+  const scrollToLatest = () => {
+    const root = conversationRoot.current;
+    if (!root) return;
+    followLatest.current = true;
+    root.scrollTo({ top: root.scrollHeight, behavior: "instant" });
+  };
   const [file, setFile] = useState<File | null>(null);
   const { busy, acquire, release } = useSubmitLock();
   const [error, setError] = useState("");
@@ -53,6 +53,51 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     (a, b) =>
       a.deliver_at.localeCompare(b.deliver_at) || a.id.localeCompare(b.id),
   );
+  const messageIds = messages.map((message) => message.id).join(",");
+  useLayoutEffect(() => {
+    const root = conversationRoot.current;
+    if (!root) return;
+    const anchor = historyAnchor.current;
+    if (anchor) {
+      const node = Array.from(
+        root.querySelectorAll<HTMLElement>("[data-message-id]"),
+      ).find((item) => item.dataset.messageId === anchor.id);
+      if (node) root.scrollTop += node.getBoundingClientRect().top - anchor.top;
+      historyAnchor.current = null;
+    } else if (followLatest.current) {
+      root.scrollTop = root.scrollHeight;
+    }
+    const observer = new ResizeObserver(() => {
+      if (followLatest.current) root.scrollTop = root.scrollHeight;
+    });
+    observer.observe(root);
+    root.querySelectorAll(".message").forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, [messageIds]);
+  useEffect(() => {
+    if (preview) return;
+    const sync = () => {
+      if (document.visibilityState === "visible") void refreshConversation();
+    };
+    sync();
+    const timer = window.setInterval(sync, 5000);
+    return () => window.clearInterval(timer);
+  }, [preview, refreshConversation]);
+  async function loadOlder() {
+    const root = conversationRoot.current;
+    const first = root?.querySelector<HTMLElement>("[data-message-id]");
+    followLatest.current = false;
+    if (first)
+      historyAnchor.current = {
+        id: first.dataset.messageId!,
+        top: first.getBoundingClientRect().top,
+      };
+    const anchor = historyAnchor.current;
+    await conversation.loadOlder();
+    requestAnimationFrame(() => {
+      if (historyAnchor.current === anchor) historyAnchor.current = null;
+    });
+  }
   const unread = messages
     .filter((m) => m.recipient_id === profile.id && !m.read_at)
     .map((m) => m.id)
@@ -160,6 +205,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
         throw new Error(
           "No pudimos confirmar la entrega. Reintenta el mismo envío.",
         );
+      followLatest.current = true;
       conversation.merge([result.message], false);
       draft.clear(emptyMail);
       setFile(null);
@@ -206,13 +252,19 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
         ref={conversationRoot}
         className="letter-history"
         aria-label="Historial de cartas"
+        tabIndex={0}
+        onScroll={(event) => {
+          const root = event.currentTarget;
+          followLatest.current =
+            root.scrollHeight - root.scrollTop - root.clientHeight < 80;
+        }}
       >
         {conversation.hasOlder && (
           <button
             type="button"
             className="text-button"
             disabled={conversation.loadingOlder}
-            onClick={() => void conversation.loadOlder()}
+            onClick={() => void loadOlder()}
           >
             {conversation.loadingOlder ? "Cargando…" : "Ver cartas anteriores"}
           </button>
@@ -275,7 +327,6 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
             </Fragment>
           ))
         )}
-        <div ref={bottom} />
       </div>
       <form className="letter-composer" onSubmit={send}>
         <fieldset

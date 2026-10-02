@@ -2366,3 +2366,5 @@ audio {
 @media (prefers-reduced-motion: reduce) {
   .app-navigation button, .gela-actions button, .keepsake-card { transition: none; }
 }
+
+.letter-history { overflow-anchor: none; overscroll-behavior-y: contain; }
