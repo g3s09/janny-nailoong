@@ -59,7 +59,6 @@ export default function Dialog({
     >
       <div className="dialog-header">
         <div>
-          <p className="eyebrow">EL RINCÓN DE JANNY</p>
           <h2 id={titleId}>{title}</h2>
           {subtitle && <p>{subtitle}</p>}
         </div>

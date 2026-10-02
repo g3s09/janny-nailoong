@@ -10,11 +10,12 @@ import {
   Moon,
   Sun,
   Mail,
-  Sparkles,
 } from "lucide-react";
 import Nailoong from "./Nailoong";
 import NailoongDialogue from "./NailoongDialogue";
 import UnreadBadge from "./UnreadBadge";
+import AppNavigation from "./AppNavigation";
+import PrivateMedia from "./PrivateMedia";
 import RoomArt from "./RoomArt";
 import { useWorld } from "@/lib/world-store";
 import { moods, today } from "@/lib/constants";
@@ -46,6 +47,8 @@ export default function HomeScene({
     error,
     refresh,
     conversation,
+    panel,
+    dataReady,
   } = useWorld();
   const [hour, setHour] = useState(12);
   useEffect(() => {
@@ -59,6 +62,9 @@ export default function HomeScene({
   }, []);
   const night = prefs.night ?? (hour >= 19 || hour < 7);
   const unread = conversation.unreadCount;
+  const latestMemory = [...data.memories].sort((a, b) =>
+    b.date.localeCompare(a.date),
+  )[0];
   const currentMood = data.moods.find((m) => m.day === today());
   const special = data.events.find(
     (e) =>
@@ -125,7 +131,6 @@ export default function HomeScene({
       <main className="world-main">
         <div className="scene-heading">
           <div>
-            <p className="eyebrow">QUÉ GUSTO VERTE POR AQUÍ</p>
             <h1>
               {hour < 12
                 ? "Buenos días"
@@ -134,9 +139,6 @@ export default function HomeScene({
                   : "Una noche tranquila"}
               , {name || "Janny"}.
             </h1>
-            <p>
-              Tenía ganas de hacer algo bonito para ti. Ojalá te guste, Janny.
-            </p>
           </div>
           <button
             className="time-switch"
@@ -246,14 +248,51 @@ export default function HomeScene({
             aria-label="Cambiar la luz de la ventana"
             onClick={() => updatePrefs({ night: !night })}
           />
-          <div className="room-instruction">
-            <Sparkles size={13} /> Te dejé varias cositas. Toca una y mira qué
-            hay.
-          </div>
           {loading && (
             <span className="room-loading">Abriendo tus recuerdos…</span>
           )}
         </section>
+        {dataReady && !loading && (unread > 0 || latestMemory) && (
+          <section className="home-keepsakes" aria-label="Para ti">
+            {unread > 0 && (
+              <button
+                className="keepsake-card letter-keepsake"
+                onClick={() => open("mail")}
+              >
+                <Mail size={25} aria-hidden="true" />
+                <span>
+                  <small>DE GELA</small>
+                  <strong>
+                    {unread === 1
+                      ? "Tienes un mensaje mío"
+                      : "Te dejé unos mensajes"}
+                  </strong>
+                </span>
+                <UnreadBadge count={unread} />
+                <ArrowUpRight size={18} aria-hidden="true" />
+              </button>
+            )}
+            {latestMemory && (
+              <article className="keepsake-card memory-keepsake">
+                {latestMemory.attachment && (
+                  <div className="keepsake-photo">
+                    <PrivateMedia
+                      path={latestMemory.attachment}
+                      alt={latestMemory.title}
+                    />
+                  </div>
+                )}
+                <button onClick={() => open("memories")}>
+                  <span>
+                    <small>UN RECUERDO NUESTRO</small>
+                    <strong>{latestMemory.title}</strong>
+                  </span>
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </button>
+              </article>
+            )}
+          </section>
+        )}
         <div className="under-room">
           <div className="mood-inline">
             <span>
@@ -292,6 +331,13 @@ export default function HomeScene({
           </button>
         </footer>
       </main>
+      <AppNavigation
+        active={panel || "home"}
+        unread={unread}
+        onChoose={(section) =>
+          open(section === "home" ? null : (section as Panel))
+        }
+      />
     </div>
   );
 }

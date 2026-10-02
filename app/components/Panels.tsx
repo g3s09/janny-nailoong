@@ -2,6 +2,8 @@
 import { useWorld } from "@/lib/world-store";
 import { welcomeLetter } from "@/lib/constants";
 import Dialog from "./Dialog";
+import AppNavigation from "./AppNavigation";
+import type { Panel } from "@/lib/types";
 import MailPanel from "./MailPanel";
 import DiaryPanel from "./DiaryPanel";
 import MemoriesPanel from "./MemoriesPanel";
@@ -20,21 +22,9 @@ const titles = {
   settings: "A tu manera",
   letter: "Te quería decir algo",
 };
-const subtitles = {
-  mail: "Escríbeme lo que quieras, Janny. Me gusta saber de ti.",
-  memories:
-    "Quiero guardar contigo esas cosas que nos hacen sonreír.",
-  diary:
-    "Te dejé un diario para que escribas lo que tú quieras.",
-  box: "Para esos días en que quisiera estar ahí contigo. Abre la que necesites.",
-  calendar:
-    "Hay días que quiero recordar contigo.",
-  care: "Te encargo a Nailoong. Si pide otra galleta, no le creas que no ha comido jsjs.",
-  settings: "Ponlo como más te guste.",
-  letter: "Esto sí quería que lo leyeras antes de empezar.",
-};
 export default function Panels({ onRepeat }: { onRepeat: () => void }) {
-  const { panel, setPanel, loading, dataReady, error, refresh } = useWorld();
+  const { panel, setPanel, loading, dataReady, error, refresh, conversation } =
+    useWorld();
   return (
     <AnimatePresence mode="wait">
       {panel && (
@@ -42,7 +32,6 @@ export default function Panels({ onRepeat }: { onRepeat: () => void }) {
           key={panel}
           kind={panel}
           title={titles[panel]}
-          subtitle={subtitles[panel]}
           onClose={() => setPanel(null)}
         >
           {(!dataReady || loading) &&
@@ -79,6 +68,14 @@ export default function Panels({ onRepeat }: { onRepeat: () => void }) {
               </button>
             </article>
           )}
+          <AppNavigation
+            embedded
+            active={panel}
+            unread={conversation.unreadCount}
+            onChoose={(section) =>
+              setPanel(section === "home" ? null : (section as Panel))
+            }
+          />
         </Dialog>
       )}
     </AnimatePresence>

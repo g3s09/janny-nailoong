@@ -4,7 +4,11 @@ import { previewAllowed } from "@/lib/supabase/client";
 import Experience from "./components/Experience";
 import type { Profile } from "@/lib/types";
 export const dynamic = "force-dynamic";
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ open?: string }>;
+}) {
   const db = await serverDb();
   if (!db) {
     if (previewAllowed)
@@ -26,6 +30,9 @@ export default async function Home() {
     .eq("id", user.id)
     .single();
   if (!profile) redirect("/login?restricted=1");
-  if (profile.role === "gela") redirect("/gela");
+  if (profile.role === "gela")
+    redirect(
+      (await searchParams).open === "mail" ? "/gela?open=mail" : "/gela",
+    );
   return <Experience profile={profile as Profile} preview={false} />;
 }

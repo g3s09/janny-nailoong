@@ -206,10 +206,11 @@ export default function MemoriesPanel({ admin = false }: { admin?: boolean }) {
           {!data.memories.length && (
             <div className="empty-state">
               <Camera size={38} />
-              <h3>{admin ? "Mi primer recuerdo con Janny" : "¿Guardamos algo nuestro aquí?"}</h3>
-              <p>
-                {admin ? "Añadir una foto, un audio o unas palabras para Janny." : "Una foto, algo que dijimos o un día que te gustó. Yo también quiero acordarme contigo."}
-              </p>
+              <h3>
+                {admin
+                  ? "Mi primer recuerdo con Janny"
+                  : "¿Guardamos algo nuestro aquí?"}
+              </h3>
             </div>
           )}
           <div className="memory-grid">

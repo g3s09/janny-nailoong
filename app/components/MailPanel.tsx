@@ -226,11 +226,6 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
           <div className="empty-state">
             <Mail size={36} />
             <h3>{admin ? "Mi conversación con Janny" : "Cuéntame, Janny."}</h3>
-            <p>
-              {admin
-                ? "Todavía no hay mensajes. Escribirle a Janny:"
-                : "Puede ser cómo te fue, algo que te dio risa o nada más un hola. Yo feliz de leerte."}
-            </p>
           </div>
         ) : (
           messages.map((m, index) => (

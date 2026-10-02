@@ -296,10 +296,6 @@ export default function ContentManager({ table }: { table: Table }) {
             {data[table].length === 0 && (
               <div className="empty-state">
                 <h3>Todavía no he añadido nada aquí.</h3>
-                <p>
-                  Los detalles que guardes aquí aparecerán en el rincón de
-                  Janny.
-                </p>
               </div>
             )}
             {data[table].map((row) => (

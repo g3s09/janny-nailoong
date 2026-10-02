@@ -33,7 +33,10 @@ export default function BoxPanel() {
       }
       setOpened(letter);
       sound("letter");
-      say("Gela me encargó este sobre. Te lo doy sin miguitas, prometido.", "hug");
+      say(
+        "Gela me encargó este sobre. Te lo doy sin miguitas, prometido.",
+        "hug",
+      );
     } catch (e) {
       setError(friendlyError(e));
     } finally {
@@ -62,9 +65,6 @@ export default function BoxPanel() {
             <div className="empty-state">
               <MailOpen size={38} />
               <h3>Tengo cosas que quiero decirte.</h3>
-              <p>
-                Todavía no te he dejado una carta aquí, Janny. Mientras, escríbeme; me va a dar gusto leerte.
-              </p>
             </div>
           ) : (
             <div className="envelope-grid">
@@ -91,9 +91,12 @@ export default function BoxPanel() {
               ))}
             </div>
           )}
-          {data.open_when.some((letter) => letter.once) && <p className="muted">
-            Si un sobre dice «una sola lectura», léelo antes de cerrarlo. Los demás puedes abrirlos cuantas veces quieras.
-          </p>}
+          {data.open_when.some((letter) => letter.once) && (
+            <p className="muted">
+              Si un sobre dice «una sola lectura», léelo antes de cerrarlo. Los
+              demás puedes abrirlos cuantas veces quieras.
+            </p>
+          )}
         </>
       )}
       {error && (
