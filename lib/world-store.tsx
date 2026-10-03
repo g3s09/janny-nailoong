@@ -301,7 +301,11 @@ export function WorldProvider({
         localUpdate: setData,
       }}
     >
-      {children}
+      <div
+        className={`personal-style palette-${prefs.palette} backdrop-${prefs.backdrop}`}
+      >
+        {children}
+      </div>
     </Context.Provider>
   );
 }

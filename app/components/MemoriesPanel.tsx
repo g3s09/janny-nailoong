@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Camera, Plus } from "lucide-react";
 import { useWorld } from "@/lib/world-store";
 import { browserDb } from "@/lib/supabase/client";
@@ -11,6 +11,7 @@ import { textValue, dayValue, limits } from "@/lib/validation";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 import DraftStatus from "./DraftStatus";
 import PrivateMedia from "./PrivateMedia";
+import MemoryGallery from "./MemoryGallery";
 export default function MemoriesPanel({ admin = false }: { admin?: boolean }) {
   const { data, profile, preview, localUpdate, refresh, notify, reward, say } =
     useWorld();
@@ -27,6 +28,10 @@ export default function MemoriesPanel({ admin = false }: { admin?: boolean }) {
         ? { ...value, saveId: value.saveId ?? crypto.randomUUID() }
         : value,
     );
+  const [galleryId, setGalleryId] = useState<string | null>(null);
+  const sorted = [...data.memories].sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
   const [photo, setPhoto] = useState<File | null>(null);
   const [audio, setAudio] = useState<File | null>(null);
   const { busy, acquire, release } = useSubmitLock();
@@ -213,13 +218,33 @@ export default function MemoriesPanel({ admin = false }: { admin?: boolean }) {
               </h3>
             </div>
           )}
+          {galleryId && (
+            <MemoryGallery
+              memories={sorted}
+              initialId={galleryId}
+              onClose={() => setGalleryId(null)}
+            />
+          )}
           <div className="memory-grid">
-            {[...data.memories]
-              .sort((a, b) => b.date.localeCompare(a.date))
-              .map((m) => (
-                <article key={m.id} className="polaroid">
+            {sorted.map((m, index) => (
+              <Fragment key={m.id}>
+                {(index === 0 ||
+                  sorted[index - 1].date.slice(0, 7) !==
+                    m.date.slice(0, 7)) && (
+                  <h3 className="memory-month">
+                    {new Date(`${m.date}T12:00:00`).toLocaleDateString(
+                      "es-MX",
+                      { month: "long", year: "numeric" },
+                    )}
+                  </h3>
+                )}
+                <article className="polaroid">
                   {m.attachment ? (
-                    <PrivateMedia path={m.attachment} alt={m.title} />
+                    <PrivateMedia
+                      path={m.attachment}
+                      alt={m.title}
+                      onOpen={() => setGalleryId(m.id)}
+                    />
                   ) : (
                     <div className="memory-note-art">
                       ♡<span>para acordarnos</span>
@@ -255,7 +280,8 @@ export default function MemoriesPanel({ admin = false }: { admin?: boolean }) {
                     Editar recuerdo
                   </button>
                 </article>
-              ))}
+              </Fragment>
+            ))}
           </div>
         </>
       )}

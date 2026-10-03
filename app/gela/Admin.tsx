@@ -21,6 +21,7 @@ import UnreadBadge from "../components/UnreadBadge";
 import MemoriesPanel from "../components/MemoriesPanel";
 import ContentManager from "./ContentManager";
 import PushSettings from "../components/PushSettings";
+import AppearanceSettings from "../components/AppearanceSettings";
 import { clearDeviceSession } from "@/lib/device-session";
 function Panel() {
   const reduced = useReducedMotion();
@@ -167,6 +168,7 @@ function Panel() {
           ) : tab === "settings" ? (
             <div className="gela-settings">
               <h2>Ajustes</h2>
+              <AppearanceSettings sounds />
               <PushSettings />
               <Link className="secondary" href="/password">
                 Cambiar contraseña

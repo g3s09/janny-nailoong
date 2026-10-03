@@ -35,15 +35,23 @@ export async function POST(request: Request) {
       return failure("El envío no es válido.", 400);
     }
     const submission = parseMessage(input, user.id);
-    const { data, error } = await db.rpc("send_private_message", {
-      request_key: submission.requestId,
-      recipient: submission.recipientId,
-      message_body: submission.body,
-      file_path: submission.attachment,
-      file_type: submission.attachmentType,
-      special: submission.important,
-      delivery: submission.deliverAt,
-    });
+    const { data, error } = await db.rpc(
+      submission.replyTo || submission.kind === "hug"
+        ? "send_private_message_v2"
+        : "send_private_message",
+      {
+        ...(submission.replyTo || submission.kind === "hug"
+          ? { reply: submission.replyTo, message_kind: submission.kind }
+          : {}),
+        request_key: submission.requestId,
+        recipient: submission.recipientId,
+        message_body: submission.body,
+        file_path: submission.attachment,
+        file_type: submission.attachmentType,
+        special: submission.important,
+        delivery: submission.deliverAt,
+      },
+    );
     if (error) {
       if (error.code === "42501")
         return failure("Tu cuenta no puede realizar este envío.", 403);

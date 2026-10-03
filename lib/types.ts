@@ -30,6 +30,8 @@ export type Panel =
 export type Profile = { id: string; name: string; role: "janny" | "gela" };
 export type Message = {
   id: string;
+  reply_to?: string | null;
+  kind?: "text" | "hug";
   sender_id: string;
   recipient_id: string;
   body: string;
@@ -106,6 +108,8 @@ export type Snapshot = {
   balance: number;
 };
 export type Preferences = {
+  palette: "honey" | "rose" | "lavender";
+  backdrop: "plain" | "dots" | "stars";
   music: boolean;
   effects: boolean;
   haptics: boolean;

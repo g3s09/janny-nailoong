@@ -10,13 +10,25 @@ import {
 } from "@/lib/validation";
 import { useSubmitLock } from "@/lib/use-submit-lock";
 import DraftStatus from "./DraftStatus";
-import { Mail, Send, Paperclip, CheckCheck } from "lucide-react";
+import {
+  Mail,
+  Send,
+  Paperclip,
+  CheckCheck,
+  Heart,
+  Reply,
+  X,
+} from "lucide-react";
 import { useWorld } from "@/lib/world-store";
 import { uploadFile, friendlyError } from "@/lib/data";
 import { prettyDate } from "@/lib/constants";
 import PrivateMedia from "./PrivateMedia";
 import WritingPrompts from "./WritingPrompts";
 import PushSettings from "./PushSettings";
+import VoiceRecorder from "./VoiceRecorder";
+import ReplyQuote from "./ReplyQuote";
+import HugMessage from "./HugMessage";
+import { useChatDetails } from "@/lib/use-chat-details";
 export default function MailPanel({ admin = false }: { admin?: boolean }) {
   const { data, profile, preview, sound, notify, say, conversation } =
     useWorld();
@@ -27,7 +39,8 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     !preview,
     decodeMail,
   );
-  const { text, important, schedule, pending } = draft.value;
+  const { text, important, schedule, pending, replyTo, replyText, kind } =
+    draft.value;
   const setText = (text: string) => draft.setValue((v) => ({ ...v, text }));
   const setImportant = (important: boolean) =>
     draft.setValue((v) => ({ ...v, important }));
@@ -42,6 +55,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     followLatest.current = true;
     root.scrollTo({ top: root.scrollHeight, behavior: "instant" });
   };
+  const [recordingVoice, setRecordingVoice] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const { busy, acquire, release } = useSubmitLock();
   const [error, setError] = useState("");
@@ -54,6 +68,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
       a.deliver_at.localeCompare(b.deliver_at) || a.id.localeCompare(b.id),
   );
   const messageIds = messages.map((message) => message.id).join(",");
+  const chat = useChatDetails(profile.id, recipient?.id, messageIds, preview);
   useLayoutEffect(() => {
     const root = conversationRoot.current;
     if (!root) return;
@@ -173,6 +188,8 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
         const attachment = file ? await uploadFile(file, profile.id) : null;
         submission = parseMessage(
           {
+            replyTo,
+            kind,
             requestId: crypto.randomUUID(),
             recipientId: recipient.id,
             body,
@@ -205,6 +222,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
         throw new Error(
           "No pudimos confirmar la entrega. Reintenta el mismo envío.",
         );
+      chat.stopTyping();
       followLatest.current = true;
       conversation.merge([result.message], false);
       draft.clear(emptyMail);
@@ -303,13 +321,60 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
                   </strong>
                   <time>{prettyDate(m.deliver_at, true)}</time>
                 </header>
-                <p>{m.body}</p>
+                {m.reply_to && (
+                  <ReplyQuote
+                    id={m.reply_to}
+                    messages={messages}
+                    preview={preview}
+                  />
+                )}
+                {m.kind === "hug" ? <HugMessage /> : <p>{m.body}</p>}
                 {m.attachment && (
                   <PrivateMedia
                     path={m.attachment}
                     type={m.attachment_type ?? "image"}
                     alt="Archivo de la carta"
                   />
+                )}
+                {chat.ready && new Date(m.deliver_at) <= new Date() && (
+                  <div className="message-actions">
+                    <button
+                      type="button"
+                      className="text-button"
+                      disabled={busy || Boolean(pending)}
+                      onClick={() => {
+                        draft.setValue((value) => ({
+                          ...value,
+                          replyTo: m.id,
+                          replyText: m.body || "Imagen o audio",
+                        }));
+                        document.getElementById("letter-body")?.focus();
+                      }}
+                    >
+                      <Reply size={15} />
+                      Responder
+                    </button>
+                    {!preview && (
+                      <button
+                        type="button"
+                        className="heart-reaction"
+                        aria-label="Corazón"
+                        aria-pressed={chat.hearts.some(
+                          (heart) =>
+                            heart.message_id === m.id &&
+                            heart.profile_id === profile.id,
+                        )}
+                        onClick={() => void chat.toggleHeart(m.id)}
+                      >
+                        <Heart size={16} />
+                        <span>
+                          {chat.hearts.filter(
+                            (heart) => heart.message_id === m.id,
+                          ).length || ""}
+                        </span>
+                      </button>
+                    )}
+                  </div>
                 )}
                 <small>
                   {new Date(m.deliver_at) > new Date() ? (
@@ -328,11 +393,61 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
           ))
         )}
       </div>
+      <div className="typing-status" role="status" aria-live="polite">
+        {chat.typing
+          ? `${recipient?.name || (admin ? "Janny" : "Gela")} está escribiendo…`
+          : ""}
+      </div>
+      {chat.error && (
+        <p className="error-text" role="alert">
+          {chat.error}
+        </p>
+      )}
       <form className="letter-composer" onSubmit={send}>
         <fieldset
           className="form-fields"
           disabled={busy || !draft.ready || Boolean(pending)}
         >
+          {replyTo && (
+            <div className="reply-draft">
+              <Reply size={17} />
+              <span>{replyText}</span>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Cancelar respuesta"
+                onClick={() =>
+                  draft.setValue((value) => ({
+                    ...value,
+                    replyTo: null,
+                    replyText: "",
+                  }))
+                }
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
+          {kind === "hug" && (
+            <div className="reply-draft">
+              <Heart size={17} />
+              <span>Un abrazo</span>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Quitar abrazo"
+                onClick={() =>
+                  draft.setValue((value) => ({
+                    ...value,
+                    kind: "text",
+                    text: "",
+                  }))
+                }
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
           <label htmlFor="letter-body">
             {admin
               ? "Mi mensaje para Janny"
@@ -358,7 +473,12 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
             placeholder={admin ? "Janny, te quería contar…" : "Gela, hoy…"}
             value={text}
             disabled={!draft.ready}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => {
+              setText(e.target.value);
+              chat.onTyping(e.target.value);
+            }}
+            onBlur={chat.stopTyping}
+            readOnly={kind === "hug"}
           />
           <DraftStatus status={draft.status} preview={preview} files />
           <div className="composer-tools">
@@ -385,6 +505,34 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
               </button>
             )}
           </div>
+          <VoiceRecorder
+            onChoose={setFile}
+            onRecordingChange={setRecordingVoice}
+            disabled={busy || Boolean(pending) || preview}
+          />
+          {chat.ready && (
+            <button
+              type="button"
+              className="text-button"
+              disabled={
+                !chat.ready ||
+                Boolean(text.trim()) ||
+                Boolean(file) ||
+                recordingVoice ||
+                preview
+              }
+              onClick={() =>
+                draft.setValue((value) => ({
+                  ...value,
+                  kind: "hug",
+                  text: "Te mando un abrazo ♡",
+                }))
+              }
+            >
+              <Heart size={16} />
+              Mandar un abrazo
+            </button>
+          )}
           {admin && (
             <div className="admin-options">
               <label className="checkbox-label">
@@ -419,7 +567,12 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
         )}
         <button
           className="primary"
-          disabled={busy || !draft.ready || (!pending && !text.trim() && !file)}
+          disabled={
+            busy ||
+            recordingVoice ||
+            !draft.ready ||
+            (!pending && !text.trim() && !file)
+          }
         >
           {busy
             ? "Guardando tu carta…"

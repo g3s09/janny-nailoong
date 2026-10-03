@@ -4,6 +4,7 @@ import { useWorld } from "@/lib/world-store";
 import { browserDb } from "@/lib/supabase/client";
 import type { Preferences } from "@/lib/types";
 import PushSettings from "./PushSettings";
+import AppearanceSettings from "./AppearanceSettings";
 import { clearDeviceSession } from "@/lib/device-session";
 import Link from "next/link";
 export default function SettingsPanel({ onRepeat }: { onRepeat: () => void }) {
@@ -37,6 +38,7 @@ export default function SettingsPanel({ onRepeat }: { onRepeat: () => void }) {
   ];
   return (
     <>
+      <AppearanceSettings />
       <div className="settings-list">
         {toggles.map((t) => (
           <label key={t.key}>
@@ -65,9 +67,7 @@ export default function SettingsPanel({ onRepeat }: { onRepeat: () => void }) {
           En iPhone: Compartir → Añadir a pantalla de inicio. En Android o PC:
           usa «Instalar aplicación» en el menú del navegador.
         </p>
-        <p>
-          Para abrir tus cartas o guardar algo nuevo necesitas conexión.
-        </p>
+        <p>Para abrir tus cartas o guardar algo nuevo necesitas conexión.</p>
       </div>
       <PushSettings />
       {!preview && (

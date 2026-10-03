@@ -4,6 +4,8 @@ import type { Preferences } from "../types";
 import { playSound, setAmbience } from "../sound";
 
 export const defaultPrefs: Preferences = {
+  palette: "honey",
+  backdrop: "plain",
   music: false,
   effects: false,
   haptics: true,
@@ -19,6 +21,14 @@ function restore(raw: string | null): Preferences {
     const value = JSON.parse(raw);
     if (!value || typeof value !== "object") return defaultPrefs;
     return {
+      palette:
+        value.palette === "rose" || value.palette === "lavender"
+          ? value.palette
+          : "honey",
+      backdrop:
+        value.backdrop === "dots" || value.backdrop === "stars"
+          ? value.backdrop
+          : "plain",
       music: false,
       effects: typeof value.effects === "boolean" ? value.effects : false,
       haptics: typeof value.haptics === "boolean" ? value.haptics : true,

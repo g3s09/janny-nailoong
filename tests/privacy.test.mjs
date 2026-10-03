@@ -401,4 +401,101 @@ test("Private world: real PostgreSQL policies, delivery, files and economy", asy
       );
     },
   );
+  await t.test(
+    "Replies, hearts and typing preserve membership and scheduled-message privacy",
+    async () => {
+      await db.exec("reset role");
+      const before = await count("messages");
+      await db.exec(
+        await readFile(
+          new URL(
+            "../supabase/migrations/006_chat_details.sql",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      );
+      assert.equal(await count("messages"), before);
+      await asUser(gela);
+      const original = (
+        await db.query(
+          `select * from public.send_private_message(gen_random_uuid(),'${janny}','Original')`,
+        )
+      ).rows[0];
+      const future = (
+        await db.query(
+          `select * from public.send_private_message(gen_random_uuid(),'${janny}','Later',null,null,false,now()+interval '1 day')`,
+        )
+      ).rows[0];
+      await asUser(janny);
+      const key = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+      const reply = (
+        await db.query(
+          `select * from public.send_private_message_v2('${key}','${gela}','A hug',null,null,false,now(),'${original.id}','hug')`,
+        )
+      ).rows[0];
+      assert.equal(reply.reply_to, original.id);
+      assert.equal(reply.kind, "hug");
+      const retry = (
+        await db.query(
+          `select * from public.send_private_message_v2('${key}','${gela}','Changed',null,null,false,now(),null,'text')`,
+        )
+      ).rows[0];
+      assert.equal(retry.id, reply.id);
+      assert.equal(retry.kind, "hug");
+      await assert.rejects(
+        db.exec(
+          `select public.send_private_message_v2(gen_random_uuid(),'${gela}','Hidden',null,null,false,now(),'${future.id}','text')`,
+        ),
+      );
+      await db.exec(
+        `insert into public.message_hearts values('${original.id}','${janny}')`,
+      );
+      await assert.rejects(
+        db.exec(
+          `insert into public.message_hearts values('${original.id}','${gela}')`,
+        ),
+      );
+      await assert.rejects(
+        db.exec(
+          `insert into public.message_hearts values('${future.id}','${janny}')`,
+        ),
+      );
+      await db.exec(`select public.set_chat_typing(true)`);
+      const typing = (
+        await db.query(
+          `select until_at>now() and until_at<=now()+interval '7 seconds' as active from public.chat_typing where profile_id='${janny}'`,
+        )
+      ).rows[0];
+      assert.equal(typing.active, true);
+      await asUser(gela);
+      assert.equal(await count("message_hearts"), 1);
+      await db.exec(
+        `delete from public.message_hearts where profile_id='${janny}'`,
+      );
+      assert.equal(await count("message_hearts"), 1);
+      await asUser(outsider);
+      assert.equal(await count("message_hearts"), 0);
+      assert.equal(await count("chat_typing"), 0);
+      await assert.rejects(db.exec(`select public.set_chat_typing(true)`));
+      await assert.rejects(
+        db.exec(
+          `select public.send_private_message_v2(gen_random_uuid(),'${gela}','No access')`,
+        ),
+      );
+      await asUser(janny);
+      await db.exec(
+        `select public.set_chat_typing(false); delete from public.message_hearts where profile_id='${janny}'`,
+      );
+      assert.equal(await count("message_hearts"), 0);
+      assert.equal(
+        (
+          await db.query(
+            `select until_at<=now() as stopped from public.chat_typing where profile_id='${janny}'`,
+          )
+        ).rows[0].stopped,
+        true,
+      );
+    },
+  );
 });

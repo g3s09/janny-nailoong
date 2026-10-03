@@ -78,3 +78,10 @@ El repositorio en GitHub despliega `main` en Vercel. Variables de producción: `
 La pantalla de inicio muestra un globo diferenciado cada 60–100 segundos de disponibilidad, durante 12 segundos. Las frases se barajan sin repetir hasta agotar la lista. Se suspenden con una sección abierta, al cambiar de pestaña, mientras se escribe o al reaccionar Nailoong a otra acción. «Un ratito en silencio» los pausa hasta abandonar o recargar la vista. La vista de prueba utiliza el mismo componente. No escribe datos de progreso ni mensajes en Supabase.
 
 Configuración administrativa completada el 30 de septiembre de 2026: las tablas y funciones de las migraciones 002 y 004 se instalaron sin alterar los mensajes existentes; las cinco variables de Web Push se guardaron como secretos de producción en Vercel. El secreto del programador se guardó en Vault y los dos trabajos de supabase/push-scheduler.sql quedaron activos. Cada persona debe autorizar los avisos en su dispositivo; esto no puede concederse remotamente desde el servidor.
+
+
+### Chat y álbum (006)
+
+Aplicar `supabase/migrations/006_chat_details.sql` después de 003 y 005. Añade referencias de respuesta, abrazos, corazones propios y un estado de escritura con caducidad de siete segundos. No borra mensajes ni progreso. Las funciones nuevas del chat se habilitan al detectar las tablas; el envío normal sigue usando el RPC existente. El archivo se aplica una sola vez, dentro de una transacción.
+
+Las notas de voz permiten escuchar, descartar y adjuntar hasta tres minutos de grabación. El micrófono se abre únicamente al pulsar Grabar audio. Las fotos se amplían en un álbum con flechas y deslizamiento; las preferencias de color, fondo y sonido se guardan por perfil en cada navegador.

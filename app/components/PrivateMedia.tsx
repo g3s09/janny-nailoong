@@ -6,10 +6,14 @@ export default function PrivateMedia({
   path,
   type = "image",
   alt = "Un recuerdo",
+  onOpen,
+  inline = false,
 }: {
   path: string;
   type?: string;
   alt?: string;
+  onOpen?: () => void;
+  inline?: boolean;
 }) {
   const [url, setUrl] = useState("");
   const [error, setError] = useState(false);
@@ -43,6 +47,17 @@ export default function PrivateMedia({
   if (!url) return <p className="muted">Abriendo un recuerdo…</p>;
   return type.startsWith("audio") ? (
     <audio controls preload="metadata" src={url} aria-label={alt} />
+  ) : inline ? (
+    <img className="private-photo" src={url} alt={alt} />
+  ) : onOpen ? (
+    <button
+      type="button"
+      className="photo-open"
+      onClick={onOpen}
+      aria-label={`Ampliar: ${alt}`}
+    >
+      <img className="private-photo" src={url} alt={alt} />
+    </button>
   ) : (
     <a
       href={url}

@@ -10,12 +10,18 @@ function text(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
 }
 export type MailDraft = {
+  replyTo: string | null;
+  replyText: string;
+  kind: "text" | "hug";
   text: string;
   important: boolean;
   schedule: string;
   pending: MessageSubmission | null;
 };
 export const emptyMail: MailDraft = {
+  replyTo: null,
+  replyText: "",
+  kind: "text",
   text: "",
   important: false,
   schedule: "",
@@ -35,6 +41,8 @@ export function decodeMail(value: unknown): MailDraft {
     )
       throw new Error("Invalid pending send");
     pending = {
+      replyTo: typeof p.replyTo === "string" ? p.replyTo : null,
+      kind: p.kind === "hug" ? "hug" : "text",
       requestId: p.requestId,
       recipientId: p.recipientId,
       body: p.body,
@@ -46,6 +54,9 @@ export function decodeMail(value: unknown): MailDraft {
     };
   }
   return {
+    replyTo: typeof v.replyTo === "string" ? v.replyTo : null,
+    replyText: text(v.replyText),
+    kind: v.kind === "hug" ? "hug" : "text",
     text: text(v.text),
     important: v.important === true,
     schedule: text(v.schedule),

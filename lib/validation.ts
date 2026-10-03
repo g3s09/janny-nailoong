@@ -73,6 +73,8 @@ export function validateFile(file: Pick<File, "size" | "type">) {
     );
 }
 export type MessageSubmission = {
+  replyTo?: string | null;
+  kind?: "text" | "hug";
   requestId: string;
   recipientId: string;
   body: string;
@@ -85,6 +87,8 @@ export function parseMessage(value: unknown, owner: string): MessageSubmission {
   if (!value || typeof value !== "object")
     throw new InputError("El envío no es válido.");
   const v = value as Record<string, unknown>;
+  if (v.kind != null && v.kind !== "text" && v.kind !== "hug")
+    throw new InputError("El tipo de mensaje no es válido.");
   const body = textValue(v.body, "La carta", limits.body);
   const attachment =
     v.attachment == null
@@ -106,6 +110,8 @@ export function parseMessage(value: unknown, owner: string): MessageSubmission {
   if (typeof v.important !== "boolean")
     throw new InputError("El tipo de carta no es válido.");
   return {
+    replyTo: v.replyTo == null ? null : uuid(v.replyTo),
+    kind: v.kind === "hug" ? "hug" : "text",
     requestId: uuid(v.requestId),
     recipientId: uuid(v.recipientId),
     body,
