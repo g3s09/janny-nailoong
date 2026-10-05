@@ -5,7 +5,9 @@ export default function VoiceRecorder({
   onChoose,
   disabled,
   onRecordingChange,
+  compact = false,
 }: {
+  compact?: boolean;
   onChoose: (file: File) => void;
   disabled: boolean;
   onRecordingChange: (recording: boolean) => void;
@@ -137,7 +139,9 @@ export default function VoiceRecorder({
     }
   }
   return (
-    <div className="voice-recorder">
+    <div
+      className={`voice-recorder ${compact ? "voice-compact" : ""} ${recording || clip || error ? "voice-expanded" : ""}`}
+    >
       {recording ? (
         <>
           <span role="status" className="recording-time">
@@ -189,10 +193,18 @@ export default function VoiceRecorder({
           type="button"
           className="text-button"
           disabled={disabled || asking}
+          aria-label={asking ? "Abriendo micrófono" : "Grabar audio"}
+          title="Grabar audio"
           onClick={() => void start()}
         >
           <Mic size={16} />
-          {asking ? "Abriendo micrófono…" : "Grabar audio"}
+          {compact
+            ? asking
+              ? "…"
+              : null
+            : asking
+              ? "Abriendo micrófono…"
+              : "Grabar audio"}
         </button>
       )}
       {error && (

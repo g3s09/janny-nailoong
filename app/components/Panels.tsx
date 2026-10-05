@@ -13,7 +13,7 @@ import CalendarPanel from "./CalendarPanel";
 import SettingsPanel from "./SettingsPanel";
 import { AnimatePresence } from "motion/react";
 const titles = {
-  mail: "Escríbeme, Janny",
+  mail: "Mensajes",
   memories: "Nuestros recuerdos",
   diary: "Tu diario",
   box: "Ábrelo cuando…",

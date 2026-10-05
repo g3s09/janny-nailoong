@@ -11,10 +11,11 @@ import {
 import { useSubmitLock } from "@/lib/use-submit-lock";
 import DraftStatus from "./DraftStatus";
 import {
-  Mail,
+  MessageCircle,
+  MoreHorizontal,
+  ArrowDown,
   Send,
   Paperclip,
-  CheckCheck,
   Heart,
   Reply,
   X,
@@ -23,7 +24,6 @@ import { useWorld } from "@/lib/world-store";
 import { uploadFile, friendlyError } from "@/lib/data";
 import { prettyDate } from "@/lib/constants";
 import PrivateMedia from "./PrivateMedia";
-import WritingPrompts from "./WritingPrompts";
 import PushSettings from "./PushSettings";
 import VoiceRecorder from "./VoiceRecorder";
 import ReplyQuote from "./ReplyQuote";
@@ -46,6 +46,31 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     draft.setValue((v) => ({ ...v, important }));
   const setSchedule = (schedule: string) =>
     draft.setValue((v) => ({ ...v, schedule }));
+  const shell = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLTextAreaElement>(null);
+  const [options, setOptions] = useState(false);
+  const [awayFromBottom, setAwayFromBottom] = useState(false);
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const target =
+      shell.current?.closest<HTMLElement>(".paper-dialog") ?? shell.current;
+    const resize = () =>
+      target?.style.setProperty(
+        "--chat-viewport",
+        `${viewport?.height ?? window.innerHeight}px`,
+      );
+    resize();
+    viewport?.addEventListener("resize", resize);
+    return () => {
+      viewport?.removeEventListener("resize", resize);
+      target?.style.removeProperty("--chat-viewport");
+    };
+  }, []);
+  useLayoutEffect(() => {
+    if (!input.current) return;
+    input.current.style.height = "auto";
+    input.current.style.height = `${Math.min(input.current.scrollHeight, 110)}px`;
+  }, [text]);
   const conversationRoot = useRef<HTMLDivElement>(null);
   const followLatest = useRef(true);
   const historyAnchor = useRef<{ id: string; top: number } | null>(null);
@@ -161,7 +186,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     e.preventDefault();
     if (preview) {
       setError(
-        "Esta es una vista de prueba. Entra con tu cuenta para enviar una carta de verdad.",
+        "Esta es una vista de prueba. Entra con tu cuenta para enviar un mensaje.",
       );
       return;
     }
@@ -169,19 +194,19 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
       setError("Todavía falta dar acceso a la otra persona.");
       return;
     }
-    if (!draft.ready || !acquire()) return;
+    if (recordingVoice || !draft.ready || !acquire()) return;
     setError("");
     try {
       let submission = pending;
       if (!submission) {
-        const body = textValue(text, "La carta", limits.body);
+        const body = textValue(text, "El mensaje", limits.body);
         if (!body && !file)
           throw new Error("Escribe unas palabras o añade un archivo.");
         const deliverAt =
           admin && schedule
             ? dateTimeValue(schedule)
             : new Date().toISOString();
-        if (admin && schedule && new Date(deliverAt).getTime() <= Date.now())
+        if (admin && schedule && new Date(deliverAt) <= new Date())
           throw new Error(
             "Elige una hora futura o quita la programación para enviarla ahora.",
           );
@@ -233,11 +258,8 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
         "Llevando tus palabras con muchísimo cuidado. Y sin migas de galleta.",
         "wave",
       );
-      notify(
-        new Date(result.message.deliver_at).getTime() > Date.now()
-          ? "Tu carta quedó programada."
-          : "Tu carta ya está en el buzón.",
-      );
+      if (new Date(result.message.deliver_at) > new Date())
+        notify("Mensaje programado.");
       requestAnimationFrame(scrollToLatest);
     } catch (e) {
       setError(
@@ -250,41 +272,77 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
       release();
     }
   }
+  const person = recipient?.name || (admin ? "Janny" : "Gela");
   return (
-    <div className="mail-panel">
-      {!preview && (
-        <details className="mail-notifications">
-          <summary>Avisarme cuando llegue un mensaje</summary>
-          <PushSettings />
-        </details>
-      )}
-      <div className="conversation-heading">
-        <div>
-          <strong>{recipient?.name || (admin ? "Janny" : "Gela")}</strong>
+    <div className="mail-panel dm-chat" ref={shell}>
+      <header className="dm-header">
+        <span className="dm-avatar" aria-hidden="true">
+          {person.slice(0, 1).toUpperCase()}
+        </span>
+        <div className="dm-person">
+          <strong>{person}</strong>
+          <span role="status" aria-live="polite">
+            {chat.typing ? "Escribiendo…" : ""}
+          </span>
         </div>
-        <button type="button" className="text-button" onClick={scrollToLatest}>
-          Ver lo más reciente ↓
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Opciones del chat"
+          aria-expanded={options}
+          aria-controls="chat-options"
+          onClick={() => setOptions(!options)}
+        >
+          <MoreHorizontal size={21} />
         </button>
-      </div>
+      </header>
+      {options && (
+        <div id="chat-options" className="dm-options">
+          {!preview && <PushSettings />}
+          {admin && (
+            <div className="admin-options">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={important}
+                  disabled={busy || Boolean(pending)}
+                  onChange={(e) => setImportant(e.target.checked)}
+                />
+                Destacar mensaje
+              </label>
+              <label>
+                Programar envío
+                <input
+                  type="datetime-local"
+                  value={schedule}
+                  disabled={busy || Boolean(pending)}
+                  onChange={(e) => setSchedule(e.target.value)}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+      )}
       <div
         ref={conversationRoot}
         className="letter-history"
-        aria-label="Historial de cartas"
+        aria-label="Conversación"
         tabIndex={0}
         onScroll={(event) => {
           const root = event.currentTarget;
           followLatest.current =
             root.scrollHeight - root.scrollTop - root.clientHeight < 80;
+          setAwayFromBottom(!followLatest.current);
         }}
       >
         {conversation.hasOlder && (
           <button
             type="button"
-            className="text-button"
+            className="text-button dm-older"
             disabled={conversation.loadingOlder}
             onClick={() => void loadOlder()}
           >
-            {conversation.loadingOlder ? "Cargando…" : "Ver cartas anteriores"}
+            {conversation.loadingOlder ? "Cargando…" : "Mensajes anteriores"}
           </button>
         )}
         {conversation.error && (
@@ -292,35 +350,42 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
             {conversation.error}
           </p>
         )}
-        {messages.length === 0 ? (
-          <div className="empty-state">
-            <Mail size={36} />
-            <h3>{admin ? "Mi conversación con Janny" : "Cuéntame, Janny."}</h3>
+        {messages.length === 0 && (
+          <div className="dm-empty">
+            <span className="dm-avatar">
+              {person.slice(0, 1).toUpperCase()}
+            </span>
+            <strong>{person}</strong>
+            <MessageCircle size={24} />
           </div>
-        ) : (
-          messages.map((m, index) => (
+        )}
+        {messages.map((m, index) => {
+          const mine = m.sender_id === profile.id;
+          const previous = messages[index - 1];
+          const grouped =
+            previous?.sender_id === m.sender_id &&
+            new Date(m.deliver_at).getTime() -
+              new Date(previous.deliver_at).getTime() <
+              5 * 60 * 1000 &&
+            new Date(previous.deliver_at).toDateString() ===
+              new Date(m.deliver_at).toDateString();
+          const future = new Date(m.deliver_at) > new Date();
+          const hearts = chat.hearts.filter(
+            (heart) => heart.message_id === m.id,
+          );
+          return (
             <Fragment key={m.id}>
-              {(index === 0 ||
-                new Date(messages[index - 1].deliver_at).toLocaleDateString(
-                  "es-MX",
-                ) !== new Date(m.deliver_at).toLocaleDateString("es-MX")) && (
+              {(!previous ||
+                new Date(previous.deliver_at).toDateString() !==
+                  new Date(m.deliver_at).toDateString()) && (
                 <p className="conversation-day">{prettyDate(m.deliver_at)}</p>
               )}
               <article
-                key={m.id}
                 data-message-id={m.id}
                 data-unread={m.recipient_id === profile.id && !m.read_at}
-                className={`message ${m.sender_id === profile.id ? "outgoing" : "incoming"} ${m.important ? "special-message" : ""}`}
+                aria-label={mine ? "Mensaje tuyo" : `Mensaje de ${person}`}
+                className={`message ${mine ? "outgoing" : "incoming"} ${grouped ? "dm-grouped" : ""} ${m.important ? "special-message" : ""}`}
               >
-                <header>
-                  <strong>
-                    {m.sender_id === profile.id
-                      ? "Tú"
-                      : recipient?.name || (admin ? "Janny" : "Gela")}
-                    {m.important ? " · una carta especial ♡" : ""}
-                  </strong>
-                  <time>{prettyDate(m.deliver_at, true)}</time>
-                </header>
                 {m.reply_to && (
                   <ReplyQuote
                     id={m.reply_to}
@@ -328,82 +393,96 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
                     preview={preview}
                   />
                 )}
-                {m.kind === "hug" ? <HugMessage /> : <p>{m.body}</p>}
+                {m.kind === "hug" ? <HugMessage /> : m.body && <p>{m.body}</p>}
                 {m.attachment && (
                   <PrivateMedia
                     path={m.attachment}
                     type={m.attachment_type ?? "image"}
-                    alt="Archivo de la carta"
+                    alt="Archivo adjunto"
                   />
                 )}
-                {chat.ready && new Date(m.deliver_at) <= new Date() && (
-                  <div className="message-actions">
-                    <button
-                      type="button"
-                      className="text-button"
-                      disabled={busy || Boolean(pending)}
-                      onClick={() => {
-                        draft.setValue((value) => ({
-                          ...value,
-                          replyTo: m.id,
-                          replyText: m.body || "Imagen o audio",
-                        }));
-                        document.getElementById("letter-body")?.focus();
-                      }}
-                    >
-                      <Reply size={15} />
-                      Responder
-                    </button>
-                    {!preview && (
+                <div className="dm-message-footer">
+                  <time
+                    dateTime={m.deliver_at}
+                    title={prettyDate(m.deliver_at, true)}
+                  >
+                    {new Date(m.deliver_at).toLocaleTimeString("es-MX", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    {future ? " · Programado" : ""}
+                    {m.important ? " ♡" : ""}
+                  </time>
+                  {chat.ready && !future && (
+                    <div className="message-actions">
                       <button
                         type="button"
-                        className="heart-reaction"
-                        aria-label="Corazón"
-                        aria-pressed={chat.hearts.some(
-                          (heart) =>
-                            heart.message_id === m.id &&
-                            heart.profile_id === profile.id,
-                        )}
-                        onClick={() => void chat.toggleHeart(m.id)}
+                        className="dm-reply"
+                        aria-label="Responder a este mensaje"
+                        title="Responder"
+                        disabled={busy || Boolean(pending)}
+                        onClick={() => {
+                          draft.setValue((value) => ({
+                            ...value,
+                            replyTo: m.id,
+                            replyText: m.body || "Imagen o audio",
+                          }));
+                          input.current?.focus();
+                        }}
                       >
-                        <Heart size={16} />
-                        <span>
-                          {chat.hearts.filter(
-                            (heart) => heart.message_id === m.id,
-                          ).length || ""}
-                        </span>
+                        <Reply size={15} />
                       </button>
-                    )}
-                  </div>
-                )}
-                <small>
-                  {new Date(m.deliver_at) > new Date() ? (
-                    "Programada"
-                  ) : m.read_at ? (
-                    <>
-                      <CheckCheck size={13} /> Leída{" "}
-                      {prettyDate(m.read_at, true)}
-                    </>
-                  ) : (
-                    "Entregada en el buzón"
+                      {!preview && (
+                        <button
+                          type="button"
+                          className="heart-reaction"
+                          aria-label="Corazón"
+                          aria-pressed={hearts.some(
+                            (heart) => heart.profile_id === profile.id,
+                          )}
+                          onClick={() => void chat.toggleHeart(m.id)}
+                        >
+                          <Heart size={14} />
+                          {hearts.length > 0 && <span>{hearts.length}</span>}
+                        </button>
+                      )}
+                    </div>
                   )}
-                </small>
+                </div>
               </article>
+              {mine && index === messages.length - 1 && !future && (
+                <span className="dm-seen">
+                  {m.read_at ? "Visto" : "Enviado"}
+                </span>
+              )}
             </Fragment>
-          ))
-        )}
+          );
+        })}
       </div>
-      <div className="typing-status" role="status" aria-live="polite">
-        {chat.typing
-          ? `${recipient?.name || (admin ? "Janny" : "Gela")} está escribiendo…`
-          : ""}
-      </div>
-      {chat.error && (
-        <p className="error-text" role="alert">
-          {chat.error}
-        </p>
+      {awayFromBottom && (
+        <button type="button" className="dm-latest" onClick={scrollToLatest}>
+          <ArrowDown size={16} />
+          {conversation.unreadCount
+            ? "Mensajes nuevos"
+            : "Ir al último mensaje"}
+        </button>
       )}
-      <form className="letter-composer" onSubmit={send}>
+      <form className="letter-composer dm-composer" onSubmit={send}>
+        {chat.error && (
+          <p className="error-text" role="alert">
+            {chat.error}
+          </p>
+        )}
+        {error && (
+          <p role="alert" className="error-text">
+            {error}
+          </p>
+        )}
+        {pending && (
+          <p className="privacy-note">
+            Envío sin confirmar. Reintenta sin duplicarlo.
+          </p>
+        )}
         <fieldset
           className="form-fields"
           disabled={busy || !draft.ready || Boolean(pending)}
@@ -448,125 +527,115 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
               </button>
             </div>
           )}
-          <label htmlFor="letter-body">
-            {admin
-              ? "Mi mensaje para Janny"
-              : "Escríbeme lo que quieras, Janny"}
-          </label>
-          {!text && (
-            <WritingPrompts
-              ideas={[
-                "Hoy me acordé de ti porque…",
-                "Te quería contar algo…",
-                "Un plan que me gustaría compartir…",
-              ]}
-              onChoose={(idea) => {
-                setText(idea.replace("…", " "));
-                document.getElementById("letter-body")?.focus();
-              }}
-            />
-          )}
-          <textarea
-            id="letter-body"
-            rows={4}
-            maxLength={10000}
-            placeholder={admin ? "Janny, te quería contar…" : "Gela, hoy…"}
-            value={text}
-            disabled={!draft.ready}
-            onChange={(e) => {
-              setText(e.target.value);
-              chat.onTyping(e.target.value);
-            }}
-            onBlur={chat.stopTyping}
-            readOnly={kind === "hug"}
-          />
-          <DraftStatus status={draft.status} preview={preview} files />
-          <div className="composer-tools">
-            <label className="attachment-button">
+          {file && (
+            <div className="dm-file">
               <Paperclip size={15} />
-              {file ? file.name : "Añadir imagen o audio"}
-              <input
-                key={fileKey}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,audio/*"
-                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              />
-            </label>
-            {file && (
+              <span>{file.name}</span>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Quitar archivo"
+                onClick={() => {
+                  setFile(null);
+                  setFileKey((key) => key + 1);
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
+          {schedule && (
+            <div className="dm-scheduled">
+              {prettyDate(schedule, true)}
               <button
                 type="button"
                 className="text-button"
-                onClick={() => {
-                  setFile(null);
-                  setFileKey((k) => k + 1);
-                }}
+                onClick={() => setSchedule("")}
               >
-                Quitar archivo
+                Cancelar programación
+              </button>
+            </div>
+          )}
+          <div className="dm-input-row">
+            <label className="dm-attachment" title="Adjuntar foto o audio">
+              <Paperclip size={21} />
+              <input
+                key={fileKey}
+                aria-label="Adjuntar foto o audio"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif,audio/*"
+                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              />
+            </label>
+            <textarea
+              ref={input}
+              id="letter-body"
+              aria-label="Mensaje"
+              rows={1}
+              maxLength={10000}
+              placeholder="Mensaje…"
+              value={text}
+              onChange={(event) => {
+                setText(event.target.value);
+                chat.onTyping(event.target.value);
+              }}
+              onBlur={chat.stopTyping}
+              readOnly={kind === "hug"}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  !event.shiftKey &&
+                  !event.nativeEvent.isComposing &&
+                  window.matchMedia("(hover: hover) and (pointer: fine)")
+                    .matches
+                ) {
+                  event.preventDefault();
+                  if (
+                    (text.trim() || file) &&
+                    !busy &&
+                    !recordingVoice &&
+                    draft.ready
+                  )
+                    event.currentTarget.form?.requestSubmit();
+                }
+              }}
+            />
+            {chat.ready && !text.trim() && !file && (
+              <button
+                type="button"
+                className="dm-hug"
+                aria-label="Preparar un abrazo"
+                title="Mandar un abrazo"
+                disabled={recordingVoice || preview}
+                onClick={() =>
+                  draft.setValue((value) => ({
+                    ...value,
+                    kind: "hug",
+                    text: "Te mando un abrazo ♡",
+                  }))
+                }
+              >
+                <Heart size={21} />
               </button>
             )}
           </div>
           <VoiceRecorder
+            compact
             onChoose={setFile}
             onRecordingChange={setRecordingVoice}
             disabled={busy || Boolean(pending) || preview}
           />
-          {chat.ready && (
-            <button
-              type="button"
-              className="text-button"
-              disabled={
-                !chat.ready ||
-                Boolean(text.trim()) ||
-                Boolean(file) ||
-                recordingVoice ||
-                preview
-              }
-              onClick={() =>
-                draft.setValue((value) => ({
-                  ...value,
-                  kind: "hug",
-                  text: "Te mando un abrazo ♡",
-                }))
-              }
-            >
-              <Heart size={16} />
-              Mandar un abrazo
-            </button>
-          )}
-          {admin && (
-            <div className="admin-options">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={important}
-                  onChange={(e) => setImportant(e.target.checked)}
-                />{" "}
-                Carta especial
-              </label>
-              <label>
-                Entregar más tarde (opcional)
-                <input
-                  type="datetime-local"
-                  value={schedule}
-                  onChange={(e) => setSchedule(e.target.value)}
-                />
-              </label>
-            </div>
-          )}
         </fieldset>
-        {pending && (
-          <p className="privacy-note">
-            Este envío está pendiente de confirmación. Al reintentar enviaremos
-            exactamente la misma carta.
-          </p>
-        )}
-        {error && (
-          <p role="alert" className="error-text">
-            {error}
-          </p>
-        )}
         <button
-          className="primary"
+          type="submit"
+          className="dm-send"
+          aria-label={
+            pending
+              ? "Reintentar envío"
+              : schedule
+                ? "Programar mensaje"
+                : "Enviar mensaje"
+          }
           disabled={
             busy ||
             recordingVoice ||
@@ -574,15 +643,12 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
             (!pending && !text.trim() && !file)
           }
         >
-          {busy
-            ? "Guardando tu carta…"
-            : pending
-              ? "Reintentar el mismo envío"
-              : schedule
-                ? "Programar carta"
-                : "Enviar carta"}
-          <Send size={15} />
+          {busy ? <span className="dm-sending">…</span> : <Send size={20} />}
+          {pending && <span>Reintentar</span>}
         </button>
+        {draft.status === "unavailable" && (
+          <DraftStatus status={draft.status} preview={preview} />
+        )}
       </form>
     </div>
   );
