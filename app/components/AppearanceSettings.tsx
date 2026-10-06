@@ -1,4 +1,5 @@
 "use client";
+import ProfilePhotoSettings from "./ProfilePhotoSettings";
 import { useWorld } from "@/lib/world-store";
 export default function AppearanceSettings({
   sounds = false,
@@ -8,6 +9,29 @@ export default function AppearanceSettings({
   const { prefs, updatePrefs } = useWorld();
   return (
     <div className="appearance-settings">
+      <ProfilePhotoSettings />
+      <fieldset>
+        <legend>Luz</legend>
+        <div className="preference-options">
+          {(
+            [
+              { value: null, label: "Automática" },
+              { value: false, label: "Día" },
+              { value: true, label: "Noche" },
+            ] as const
+          ).map(({ value, label }) => (
+            <button
+              type="button"
+              className="secondary"
+              aria-pressed={prefs.night === value}
+              key={label}
+              onClick={() => updatePrefs({ night: value })}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </fieldset>
       <fieldset>
         <legend>Colores</legend>
         <div className="preference-options">

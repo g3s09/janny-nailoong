@@ -46,7 +46,7 @@ export default function Panels({ onRepeat }: { onRepeat: () => void }) {
               )}
             </div>
           ) : panel === "mail" ? (
-            <MailPanel />
+            <MailPanel onClose={() => setPanel(null)} />
           ) : panel === "diary" ? (
             <DiaryPanel />
           ) : panel === "memories" ? (

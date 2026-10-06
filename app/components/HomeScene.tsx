@@ -194,7 +194,7 @@ export default function HomeScene({
             <Nailoong
               animation={character}
               treat={treat}
-              size={210}
+              size={235}
               name={name}
               accessory={prefs.accessory}
               onInteract={() => {

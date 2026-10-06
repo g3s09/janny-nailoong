@@ -75,7 +75,10 @@ export function useConversation(
         const next = new Map(current.map((m) => [m.id, m]));
         rows.forEach((m) =>
           next.set(m.id, {
-            ...m,
+            ...(Date.parse(next.get(m.id)?.edited_at ?? "") >
+            Date.parse(m.edited_at ?? "1970-01-01")
+              ? next.get(m.id)!
+              : m),
             read_at: m.read_at ?? next.get(m.id)?.read_at ?? null,
           }),
         );
@@ -197,7 +200,9 @@ export function useConversation(
           if (!id) return;
           if (event.eventType === "DELETE") {
             setMessages((current) => current.filter((m) => m.id !== id));
-            void refreshUnread().catch((e) => { if (live) setError(friendlyError(e)); });
+            void refreshUnread().catch((e) => {
+              if (live) setError(friendlyError(e));
+            });
             return;
           }
           const { data, error } = await db
@@ -207,7 +212,9 @@ export function useConversation(
             .maybeSingle();
           if (live && !error && data) {
             merge([data as Message]);
-            void refreshUnread().catch((e) => { if (live) setError(friendlyError(e)); });
+            void refreshUnread().catch((e) => {
+              if (live) setError(friendlyError(e));
+            });
           }
         },
       )

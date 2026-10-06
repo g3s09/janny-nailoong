@@ -12,6 +12,10 @@ import { useSubmitLock } from "@/lib/use-submit-lock";
 import DraftStatus from "./DraftStatus";
 import {
   MessageCircle,
+  Search,
+  Bookmark,
+  Pencil,
+  ArrowLeft,
   MoreHorizontal,
   ArrowDown,
   Send,
@@ -28,8 +32,20 @@ import PushSettings from "./PushSettings";
 import VoiceRecorder from "./VoiceRecorder";
 import ReplyQuote from "./ReplyQuote";
 import HugMessage from "./HugMessage";
+import ChatLibrary from "./ChatLibrary";
+import EditMessage from "./EditMessage";
+import MessageGesture from "./MessageGesture";
+import ProfileAvatar from "./ProfileAvatar";
+import { useFavorites } from "@/lib/use-favorites";
+import type { Message } from "@/lib/types";
 import { useChatDetails } from "@/lib/use-chat-details";
-export default function MailPanel({ admin = false }: { admin?: boolean }) {
+export default function MailPanel({
+  admin = false,
+  onClose,
+}: {
+  admin?: boolean;
+  onClose: () => void;
+}) {
   const { data, profile, preview, sound, notify, say, conversation } =
     useWorld();
   const { markRead, refresh: refreshConversation } = conversation;
@@ -48,22 +64,44 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     draft.setValue((v) => ({ ...v, schedule }));
   const shell = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const [library, setLibrary] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    const timer = setTimeout(update, 0);
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
   const [options, setOptions] = useState(false);
   const [awayFromBottom, setAwayFromBottom] = useState(false);
   useEffect(() => {
     const viewport = window.visualViewport;
     const target =
       shell.current?.closest<HTMLElement>(".paper-dialog") ?? shell.current;
-    const resize = () =>
+    const resize = () => {
+      if (viewport && viewport.scale !== 1) return;
       target?.style.setProperty(
         "--chat-viewport",
         `${viewport?.height ?? window.innerHeight}px`,
       );
+      target?.style.setProperty("--chat-top", `${viewport?.offsetTop ?? 0}px`);
+    };
     resize();
     viewport?.addEventListener("resize", resize);
+    viewport?.addEventListener("scroll", resize);
+    window.addEventListener("resize", resize);
     return () => {
       viewport?.removeEventListener("resize", resize);
+      viewport?.removeEventListener("scroll", resize);
+      window.removeEventListener("resize", resize);
       target?.style.removeProperty("--chat-viewport");
+      target?.style.removeProperty("--chat-top");
     };
   }, []);
   useLayoutEffect(() => {
@@ -94,6 +132,17 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
   );
   const messageIds = messages.map((message) => message.id).join(",");
   const chat = useChatDetails(profile.id, recipient?.id, messageIds, preview);
+  const saved = useFavorites(profile.id, preview, messageIds);
+  function reply(message: Message) {
+    if (busy || pending || !chat.ready) return;
+    draft.setValue((value) => ({
+      ...value,
+      replyTo: message.id,
+      replyText: message.body || "Imagen o audio",
+    }));
+    setLibrary(false);
+    requestAnimationFrame(() => input.current?.focus());
+  }
   useLayoutEffect(() => {
     const root = conversationRoot.current;
     if (!root) return;
@@ -143,7 +192,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     .map((m) => m.id)
     .join(",");
   useEffect(() => {
-    if (preview || !unread) return;
+    if (preview || library || !unread) return;
     let live = true;
     const pendingReads = new Set<string>();
     const visible = new Set<string>();
@@ -181,7 +230,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
       observer.disconnect();
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [unread, preview, markRead]);
+  }, [unread, preview, library, markRead]);
   async function send(e: React.FormEvent) {
     e.preventDefault();
     if (preview) {
@@ -192,6 +241,12 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
     }
     if (!recipient) {
       setError("Todavía falta dar acceso a la otra persona.");
+      return;
+    }
+    if (!navigator.onLine) {
+      setError(
+        "Sin conexión. Tu mensaje sigue aquí; envíalo cuando vuelva la conexión.",
+      );
       return;
     }
     if (recordingVoice || !draft.ready || !acquire()) return;
@@ -276,15 +331,36 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
   return (
     <div className="mail-panel dm-chat" ref={shell}>
       <header className="dm-header">
-        <span className="dm-avatar" aria-hidden="true">
-          {person.slice(0, 1).toUpperCase()}
-        </span>
-        <div className="dm-person">
-          <strong>{person}</strong>
-          <span role="status" aria-live="polite">
-            {chat.typing ? "Escribiendo…" : ""}
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Salir del chat"
+          onClick={onClose}
+        >
+          <ArrowLeft size={21} />
+        </button>
+        <button
+          type="button"
+          className="dm-contact"
+          aria-label={`Ver fotos, audios y mensajes con ${person}`}
+          onClick={() => setLibrary(true)}
+        >
+          <ProfileAvatar name={person} path={recipient?.avatar_path} />
+          <span className="dm-person">
+            <strong>{person}</strong>
+            <span role="status" aria-live="polite">
+              {chat.typing ? "Escribiendo…" : ""}
+            </span>
           </span>
-        </div>
+        </button>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Buscar mensajes"
+          onClick={() => setLibrary(true)}
+        >
+          <Search size={20} />
+        </button>
         <button
           type="button"
           className="icon-button"
@@ -296,6 +372,19 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
           <MoreHorizontal size={21} />
         </button>
       </header>
+      {library && (
+        <ChatLibrary
+          profileId={profile.id}
+          preview={preview}
+          onClose={() => setLibrary(false)}
+          onReply={reply}
+        />
+      )}
+      {!online && (
+        <div className="connection-strip" role="status">
+          Sin conexión
+        </div>
+      )}
       {options && (
         <div id="chat-options" className="dm-options">
           {!preview && <PushSettings />}
@@ -380,10 +469,22 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
                   new Date(m.deliver_at).toDateString()) && (
                 <p className="conversation-day">{prettyDate(m.deliver_at)}</p>
               )}
-              <article
-                data-message-id={m.id}
-                data-unread={m.recipient_id === profile.id && !m.read_at}
-                aria-label={mine ? "Mensaje tuyo" : `Mensaje de ${person}`}
+              <MessageGesture
+                id={m.id}
+                unread={m.recipient_id === profile.id && !m.read_at}
+                label={mine ? "Mensaje tuyo" : `Mensaje de ${person}`}
+                onReply={() => {
+                  if (!future) reply(m);
+                }}
+                onHeart={() => {
+                  if (
+                    chat.ready &&
+                    !future &&
+                    !preview &&
+                    !hearts.some((heart) => heart.profile_id === profile.id)
+                  )
+                    void chat.toggleHeart(m.id);
+                }}
                 className={`message ${mine ? "outgoing" : "incoming"} ${grouped ? "dm-grouped" : ""} ${m.important ? "special-message" : ""}`}
               >
                 {m.reply_to && (
@@ -393,7 +494,21 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
                     preview={preview}
                   />
                 )}
-                {m.kind === "hug" ? <HugMessage /> : m.body && <p>{m.body}</p>}
+                {editingId === m.id ? (
+                  <EditMessage
+                    key={m.id}
+                    message={m}
+                    onCancel={() => setEditingId(null)}
+                    onSave={(updated) => {
+                      conversation.merge([updated], false);
+                      setEditingId(null);
+                    }}
+                  />
+                ) : m.kind === "hug" ? (
+                  <HugMessage />
+                ) : (
+                  m.body && <p>{m.body}</p>
+                )}
                 {m.attachment && (
                   <PrivateMedia
                     path={m.attachment}
@@ -410,11 +525,33 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
+                    {m.edited_at ? " · editado" : ""}
                     {future ? " · Programado" : ""}
                     {m.important ? " ♡" : ""}
                   </time>
                   {chat.ready && !future && (
                     <div className="message-actions">
+                      {!preview && (
+                        <button
+                          type="button"
+                          aria-label="Guardar favorito"
+                          title="Favorito"
+                          aria-pressed={saved.favorites.includes(m.id)}
+                          onClick={() => void saved.toggle(m.id)}
+                        >
+                          <Bookmark size={14} />
+                        </button>
+                      )}
+                      {mine && !preview && m.kind !== "hug" && (
+                        <button
+                          type="button"
+                          aria-label="Editar mensaje"
+                          title="Editar"
+                          onClick={() => setEditingId(m.id)}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="dm-reply"
@@ -449,7 +586,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
                     </div>
                   )}
                 </div>
-              </article>
+              </MessageGesture>
               {mine && index === messages.length - 1 && !future && (
                 <span className="dm-seen">
                   {m.read_at ? "Visto" : "Enviado"}
@@ -468,6 +605,16 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
         </button>
       )}
       <form className="letter-composer dm-composer" onSubmit={send}>
+        {saved.error && (
+          <p role="alert" className="error-text">
+            {saved.error}
+          </p>
+        )}
+        {busy && (
+          <p className="send-status" role="status">
+            Enviando…
+          </p>
+        )}
         {chat.error && (
           <p className="error-text" role="alert">
             {chat.error}
@@ -478,7 +625,7 @@ export default function MailPanel({ admin = false }: { admin?: boolean }) {
             {error}
           </p>
         )}
-        {pending && (
+        {pending && !busy && (
           <p className="privacy-note">
             Envío sin confirmar. Reintenta sin duplicarlo.
           </p>

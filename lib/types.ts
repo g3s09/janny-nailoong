@@ -27,9 +27,15 @@ export type Panel =
   | "settings"
   | "letter"
   | null;
-export type Profile = { id: string; name: string; role: "janny" | "gela" };
+export type Profile = {
+  avatar_path?: string | null;
+  id: string;
+  name: string;
+  role: "janny" | "gela";
+};
 export type Message = {
   id: string;
+  edited_at?: string | null;
   reply_to?: string | null;
   kind?: "text" | "hug";
   sender_id: string;

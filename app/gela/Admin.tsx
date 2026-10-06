@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { WorldProvider, useWorld } from "@/lib/world-store";
 import type { Profile } from "@/lib/types";
 import { browserDb } from "@/lib/supabase/client";
+import Dialog from "../components/Dialog";
 import MailPanel from "../components/MailPanel";
 import UnreadBadge from "../components/UnreadBadge";
 import MemoriesPanel from "../components/MemoriesPanel";
@@ -190,7 +191,9 @@ function Panel() {
               </button>
             </div>
           ) : tab === "mail" ? (
-            <MailPanel admin />
+            <Dialog kind="mail" title="Mensajes" onClose={() => setTab("home")}>
+              <MailPanel admin onClose={() => setTab("home")} />
+            </Dialog>
           ) : tab === "memories" ? (
             <MemoriesPanel admin />
           ) : (

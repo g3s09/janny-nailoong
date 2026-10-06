@@ -194,7 +194,7 @@ export function WorldProvider({
     // Scheduled letters have no database update when their availability time arrives.
     const sync = () => {
       if (document.visibilityState === "visible")
-        void refresh(["open_when", "notifications"]);
+        void refresh(["open_when", "notifications", "profiles"]);
     };
     const timer = setInterval(sync, 60000);
     document.addEventListener("visibilitychange", sync);
@@ -302,7 +302,7 @@ export function WorldProvider({
       }}
     >
       <div
-        className={`personal-style palette-${prefs.palette} backdrop-${prefs.backdrop}`}
+        className={`personal-style palette-${prefs.palette} backdrop-${prefs.backdrop} ${prefs.night === true ? "theme-night" : prefs.night === null ? "theme-auto" : "theme-day"}`}
       >
         {children}
       </div>

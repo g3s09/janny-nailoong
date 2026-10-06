@@ -498,4 +498,141 @@ test("Private world: real PostgreSQL policies, delivery, files and economy", asy
       );
     },
   );
+  await t.test(
+    "Editing, favorites and avatars stay private and preserve existing data",
+    async () => {
+      await db.exec("reset role");
+      const totals = await Promise.all([
+        count("messages"),
+        count("moods"),
+        count("coins"),
+        count("unlocks"),
+      ]);
+      await db.exec(
+        await readFile(
+          new URL(
+            "../supabase/migrations/007_chat_library_and_profiles.sql",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      );
+      assert.deepEqual(
+        await Promise.all([
+          count("messages"),
+          count("moods"),
+          count("coins"),
+          count("unlocks"),
+        ]),
+        totals,
+      );
+      await asUser(gela);
+      const original = (
+        await db.query(
+          `select * from public.send_private_message(gen_random_uuid(),'${janny}','Typo')`,
+        )
+      ).rows[0];
+      const future = (
+        await db.query(
+          `select * from public.send_private_message(gen_random_uuid(),'${janny}','Hidden',null,null,false,now()+interval '1 day')`,
+        )
+      ).rows[0];
+      const corrected = (
+        await db.query(
+          `select * from public.edit_chat_message('${original.id}','Corrected','Typo')`,
+        )
+      ).rows[0];
+      assert.equal(corrected.body, "Corrected");
+      assert.ok(corrected.edited_at);
+      assert.equal(
+        corrected.deliver_at.getTime(),
+        original.deliver_at.getTime(),
+      );
+      await assert.rejects(
+        db.exec(
+          `select public.edit_chat_message('${original.id}','Stale edit','Typo')`,
+        ),
+      );
+      await assert.rejects(
+        db.exec(
+          `select public.edit_chat_message('${original.id}','','Corrected')`,
+        ),
+      );
+      await db.exec(
+        `insert into public.message_favorites values('${gela}','${original.id}')`,
+      );
+      await asUser(janny);
+      assert.equal(await count("message_favorites"), 0);
+      await assert.rejects(
+        db.exec(
+          `select public.edit_chat_message('${original.id}','Forged','Corrected')`,
+        ),
+      );
+      await assert.rejects(
+        db.exec(
+          `insert into public.message_favorites values('${gela}','${original.id}')`,
+        ),
+      );
+      await assert.rejects(
+        db.exec(
+          `insert into public.message_favorites values('${janny}','${future.id}')`,
+        ),
+      );
+      await db.exec(
+        `insert into public.message_favorites values('${janny}','${original.id}')`,
+      );
+      assert.equal(await count("message_favorites"), 1);
+      await asUser(gela);
+      await db.exec(
+        `insert into storage.objects(bucket_id,name) values('keepsakes','${gela}/avatar.jpeg'),('keepsakes','${gela}/not-an-avatar.jpeg'); select public.set_profile_avatar('${gela}/avatar.jpeg')`,
+      );
+      await asUser(janny);
+      assert.equal(
+        (
+          await db.query(
+            `select * from storage.objects where name='${gela}/avatar.jpeg'`,
+          )
+        ).rows.length,
+        1,
+      );
+      assert.equal(
+        (
+          await db.query(
+            `select * from storage.objects where name='${gela}/not-an-avatar.jpeg'`,
+          )
+        ).rows.length,
+        0,
+      );
+      await assert.rejects(
+        db.exec(`select public.set_profile_avatar('${gela}/avatar.jpeg')`),
+      );
+      await asUser(outsider);
+      assert.equal(await count("message_favorites"), 0);
+      assert.equal(
+        (
+          await db.query(
+            `select * from storage.objects where name='${gela}/avatar.jpeg'`,
+          )
+        ).rows.length,
+        0,
+      );
+      await assert.rejects(db.exec(`select public.set_profile_avatar(null)`));
+      await assert.rejects(
+        db.exec(
+          `select public.edit_chat_message('${original.id}','Intrusion','Corrected')`,
+        ),
+      );
+      await asUser(gela);
+      await db.exec(`select public.set_profile_avatar(null)`);
+      await asUser(janny);
+      assert.equal(
+        (
+          await db.query(
+            `select * from storage.objects where name='${gela}/avatar.jpeg'`,
+          )
+        ).rows.length,
+        0,
+      );
+    },
+  );
 });
